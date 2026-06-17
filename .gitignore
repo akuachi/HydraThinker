@@ -6,4 +6,7 @@ venv/
 .venv/
 *.log
 output/logs/
+output/evolution/
+output/accepted/
+output/dashboard_data.json
 output/embeddings_cache.json
