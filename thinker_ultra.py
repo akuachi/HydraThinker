@@ -14,157 +14,212 @@ from datetime import datetime
 from ollama import chat, embed
 
 # =========================
-# PERCORSI ASSOLUTI
+# PATH HELPERS (inizializzati da init_paths())
 # =========================
 
-BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_DIR = os.path.join(BASE_DIR, "output")
-EVOL_DIR   = os.path.join(OUTPUT_DIR, "evolution")
-LOG_DIR    = os.path.join(OUTPUT_DIR, "logs")
-ACCEPT_DIR = os.path.join(OUTPUT_DIR, "accepted")
-
-MEMORY_FILE         = os.path.join(BASE_DIR, "memory.json")
-BRIEF_FILE          = os.path.join(BASE_DIR, "brief.md")
-DASHBOARD_DATA_FILE = os.path.join(OUTPUT_DIR, "dashboard_data.json")
-
-for _d in [EVOL_DIR, LOG_DIR, ACCEPT_DIR]:
-    os.makedirs(_d, exist_ok=True)
-
 # =========================
-# CONFIG
+# CONFIG (carica da config.json, valori di default per tutto il resto)
 # =========================
 
-MODEL       = "qwen3:14b"
-EMBED_MODEL = "all-minilm"
-
-POP_SIZE   = 6
-SURVIVORS  = 3
-SLEEP      = 10           # pausa tra generazioni
-MIN_SCORE  = 35           # la scala ora è 5-95; idee mediocri iniziano a 30-40
-HOF_SCORE  = 85
-
-# ── Tipi di prodotto (formato/struttura tecnica) ─────────────────────────────
-IDEA_TYPES = [
-    "saas",           # webapp con abbonamento
-    "bot",            # Telegram / Discord / Slack bot
-    "tool",           # strumento CLI o web utility
-    "marketplace",    # piattaforma domanda/offerta
-    "api",            # microservizio / SDK
-    "browser-ext",    # estensione Chrome/Firefox
-    "no-code",        # builder visuale / template shop
-    "community",      # forum / community di nicchia
-    "data-product",   # dataset, report, newsletter a pagamento
-    "game",           # mini-gioco web o mobile-web
-]
-
-# ── Domini tematici (argomento dell'idea) ────────────────────────────────────
-# Il sistema cicla su questi domini per garantire variety massima.
-# La combinazione TIPO + DOMINIO è il vero driver di diversità.
-IDEA_DOMAINS = [
-    "salute e benessere personale",
-    "educazione e apprendimento pratico",
-    "finanza personale e risparmio",
-    "produttività artigiani e freelance",
-    "creatività: musica, arte, scrittura",
-    "ambiente e sostenibilità quotidiana",
-    "sport, fitness e nutrizione",
-    "viaggi, turismo locale e esperienze",
-    "cibo, cucina e ristorazione locale",
-    "gaming e comunità di giocatori",
-    "burocrazia e documenti semplificati",
-    "HR, recruiting e carriera",
-    "real estate e affitti",
-    "e-commerce verticale di nicchia",
-    "genitori, famiglie e bambini",
-    "animali domestici",
-    "artigianato, maker e DIY",
-    "musica e podcast indipendenti",
-    "volontariato e terzo settore",
-    "developer tools",
-]
-
-# Varietà di idee — il sistema CICLA su queste per garantire massima diversità
-# Include sia idee AI-based che classiche, l'importante è alternare
-IDEA_VARIETIES = [
-    "SaaS B2B classico (CRUD, dashboard, report, gestione — AI opzionale)",
-    "tool AI per nicchia specifica (non AI generico, ma applicato a un settore)",
-    "bot utility (Telegram/Discord — logica tradizionale o AI leggera)",
-    "community / marketplace verticale (domanda/offerta, matching umano, recensioni)",
-    "automazione tradizionale (webhook, schedule, notifiche, integrazioni API)",
-    "strumento per creator/developer/artigiani (template, generatori, calcolatori)",
-    "estensione browser (utility, produttività, integrazione)",
-    "piattaforma contenuti / educational (corsi, template, risorse)",
-    "mini-gioco web o mobile-web (single player o multiplayer leggero)",
-    "directory / catalogo verificato (elenchi, ricerca, filtri, profili)",
-    "e-commerce di nicchia (vetrina, carrello, pagamenti, dropshipping leggero)",
-    "automazione AI applicata (non AI generalista, ma risolve un problema preciso)",
-]
-
-MAX_MEMORY_CONCEPTS  = 300
-MAX_RETRY            = 2
-MAX_WORKERS          = 4
-LLM_TIMEOUT          = 300
-EMBED_SIM_THRESHOLD  = 0.85    # soglia cosine similarity per dedup (0.0-1.0)
-ADAPTIVE_WINDOW      = 7       # ultime N generazioni per calibrare MIN_SCORE
-NOVELTY_VARIETY_BONUS = 3      # punti extra per varietà mai esplorata
-NOVELTY_DOMAIN_BONUS  = 2      # punti extra per dominio inesplorato
-
-# Tipi di mutazione — il sistema CICLA su questi per varietà evolutiva
-MUTATION_TYPES = [
-    "cambia il target di riferimento (stessa soluzione, utenti/settore diverso)",
-    "cambia il modello di business/pricing (es. subscription -> usage / marketplace -> commissioni)",
-    "applica la stessa idea a un dominio/settore completamente diverso",
-]
-
-# Soglia per enrichment (solo idee migliori ricevono analisi approfondita)
-ENRICH_SCORE_THRESHOLD = 70
-
-# Keyword comuni ignorate nella deduplication
-COMMON_KEYWORDS = {
-    "ai", "tool", "app", "api", "saas", "bot", "user", "data",
-    "platform", "service", "online", "web", "cloud", "auto",
-    "strumento", "utente", "dati", "piattaforma", "servizio",
-    "sistema", "gestione", "management", "solution", "soluzione",
-    "assistant", "assistente", "intelligenza", "machine", "learning",
-    "tempo", "persona", "personale", "locale", "digitale", "sociale",
-    "rapido", "semplice", "facile", "veloce", "nuovo", "nuova",
-    "casa", "lavoro", "vita", "giorno", "mese", "anno",
-    "creare", "trovare", "avere", "fare", "essere", "potere",
-    "primo", "prima", "ogni", "altro", "altra", "stessa", "stesso",
-    "privacy", "sicurezza", "gratuito", "premium", "account",
-    "notifica", "aggiornamento", "download", "upload", "login",
-    "accesso", "ricerca", "filtro", "categoria", "profilo",
-    "messaggio", "chat", "email", "telefono", "mobile", "desktop",
+DEFAULT_CFG = {
+    "instance_dir": os.path.dirname(os.path.abspath(__file__)),
+    "memory_file": "memory.json",
+    "brief_file": "brief.md",
+    "output_dir": "output",
+    "model": "qwen3:14b",
+    "embed_model": "all-minilm",
+    "pop_size": 6, "survivors": 3, "sleep": 10, "min_score": 35, "hof_score": 85,
+    "max_workers": 4, "max_retry": 2, "llm_timeout": 300, "candidate_timeout": 600,
+    "temperature": 0.8, "num_ctx": 4096, "max_memory_concepts": 300,
+    "embed_sim_threshold": 0.85, "concept_similarity_threshold": 3,
+    "adaptive_window": 7, "adaptive_lookback": 5, "median_multiplier": 0.75,
+    "min_pop_size": 3, "max_pop_size": 12,
+    "pass_rate_min": 0.4, "pass_rate_max": 0.85,
+    "vc_weight": 0.75, "comp_weight": 0.25,
+    "novelty_variety_bonus": 3, "novelty_domain_bonus": 2, "compound_bonus": 2,
+    "max_novelty_bonus": 7, "enrich_score_threshold": 70,
+    "widen_lo": 35.0, "widen_hi": 80.0, "widen_target_lo": 10.0, "widen_target_hi": 95.0,
+    "port": 8080, "brief_mode": "inspiration",
 }
 
-DASHBOARD_PORT = 8080
+CFG = dict(DEFAULT_CFG)
 
-EMBEDDING_CACHE_FILE = os.path.join(OUTPUT_DIR, "embeddings_cache.json")
+def _brief_path() -> str:
+    """Ritorna il percorso del file brief, costruendolo se init_paths() non è ancora stato chiamato."""
+    p = CFG.get("_brief_file")
+    if p:
+        return p
+    return os.path.join(CFG.get("instance_dir", ""), CFG.get("brief_file", "brief.md"))
 
-# Limite di tempo per ogni singolo candidato (in secondi)
-# Se un candidato impiega più di questo, viene saltato
-CANDIDATE_TIMEOUT = 600
+def _default_config() -> dict:
+    """Config di default completa (stessa struttura del file config.json)."""
+    return {
+        "prompts": {
+            "generate_system": "Sei un generatore di idee startup originali, concrete e molto varie. EVITA di ripeterti: se un'idea \u00e8 gi\u00e0 stata generata, cambia completamente approccio, target e meccanica.",
+            "generate_output": "OUTPUT (conciso, max 200 parole):\nNome: ...\nProblema: ...\nSoluzione: ...\nTarget: ...\nMonetizzazione: ...",
+            "market_system": "Sei un analista di mercato con 20 anni di esperienza. USA TUTTA LA SCALA 0-100. Sii selettivo: 1 idea su 10 merita oltre 70. La maggior parte delle idee (anche buone) sta tra 30 e 55. Solo idee con nicchia chirurgica, monetizzazione immediata e mercato reale non saturo meritano 70+.",
+            "market_criteria": "1. TARGET: nicchia specifica e reale (alto) vs target generico (basso)\n2. MONETIZZAZIONE: modello concreto e rapido (alto) vs vago (basso)\n3. MERCATO: spazio reale non saturo (alto) vs mercato affollato (basso)\n4. COMPETITOR: vantaggio chiaro (alto) vs commodity (basso)",
+            "market_anchors": "10=inesistente, 25=debole, 50=discreto, 75=buono, 95=eccellente",
+            "market_output": "Rispondi SOLO con JSON:\n{{\"score\": <0-100>, \"weakness\": \"<max 15 parole>\", \"concepts\": [\"<kw1>\",\"<kw2>\",\"<kw3>\"]}}",
+            "technical_system": "Sei un CTO con esperienza in startup. USA TUTTA LA SCALA 0-100. Sii selettivo: 1 idea su 10 merita oltre 70. La maggior parte delle idee sta tra 30 e 55. Solo idee veramente originali, semplici da costruire e senza rischi esterni meritano 70+.",
+            "technical_criteria": "1. ORIGINALIT\u00c0: genuinamente nuova (alto) vs ennesima variante (basso)\n2. FATTIBILIT\u00c0: realizzabile da 1 dev in 2 settimane (alto) vs complesso (basso)\n3. COMPLESSIT\u00c0: stack semplice (alto) vs infrastruttura complessa (basso)\n4. RISCHIO: autonomo (alto) vs dipende da API/dati esterni (basso)",
+            "technical_anchors": "10=banale e complessa, 25=gi\u00e0 vista, 50=onesta, 75=originale e realizzabile, 95=brillante e semplicissima",
+            "technical_output": "Rispondi SOLO con JSON:\n{{\"score\": <0-100>, \"weakness\": \"<max 15 parole>\", \"concepts\": [\"<kw1>\",\"<kw2>\",\"<kw3>\"]}}",
+            "competition_system": "Sei un analista che cerca SPAZI VUOTI. Sii selettivo: 1 idea su 10 ha un competition_score > 65. La maggior parte ha concorrenza significativa (score 30-55). USA TUTTA LA SCALA 0-100. Identifica competitor reali.",
+            "competition_questions": "1. Competitori diretti: esistono soluzioni IDENTICHE o solo simili?\n2. Domanda: reale o hype? Ci sono community/gruppi che ne parlano?\n3. Barriere: quanto \u00e8 difficile per altri copiare l'idea?\n4. Spazio: questa nicchia \u00e8 servita o ignorata dai competitor?",
+            "competition_anchors": "90=nicchia vergine, 70=poca concorrenza, 50=mediamente saturo, 30=molto saturo",
+            "competition_output": "Rispondi SOLO con JSON:\n{{\n  \"analysis\": \"<analisi concisa>\",\n  \"competition_score\": <intero 0-100>\n}}",
+            "enrichment_system": "Sei un senior product manager. Analizza l'idea e fornisci dettagli concreti per passare all'implementazione.",
+            "enrichment_format": "**Stack tecnologico suggerito** (linguaggi, framework, servizi specifici)\n**3 funzionalit\u00e0 MVP** (essenziali per il lancio)\n**Canale acquisizione** (come trovare i primi 100 utenti)\n**SWAT veloce** (Strengths, Weaknesses, Opportunities, Threats \u2014 1 punto ciascuno)\n\nOutput max 200 parole, concreto e specifico.",
+            "mutation_system": "Sei un product architect creativo. Trasforma l'idea seguendo il tipo di mutazione indicato.",
+            "mutation_output": "Crea una variante seguendo STRETTAMENTE questo tipo di mutazione. L'idea risultante deve essere diversa dall'originale nel modo indicato. Output conciso (max 150 parole): Nome, Problema, Soluzione, Target.",
+        },
+        "generation_examples": [
+            "Piattaforma verticale per una nicchia SPECIFICA con monetizzazione chiara e competitor assenti",
+            "Tool che risolve un problema frustrante per un target ben definito (non \"tutti\")",
+            "Marketplace iper-locale che collega domanda/offerta in un settore con pochi intermediari",
+            "Bot/servizio che automatizza un processo manuale doloroso per professionisti di nicchia",
+            "Directory verificata con recensioni autentiche in un settore dove non esistono",
+            "SaaS B2B per un settore artigianale specifico (non \"ristoranti\" ma \"pasticcerie artigianali\")",
+            "Piattaforma educational che risolve un PROBLEMA SPECIFICO per un target preciso",
+            "Tool AI che applica ML a un DATASET DI NICCHIA (non AI generalista)",
+            "Mini-gioco sociale con meccanica virale e monetizzazione non invasiva",
+            "Community verticale con curation umana in un settore frammentato",
+        ],
+        "idea_types": ["saas", "bot", "tool", "marketplace", "api", "browser-ext", "no-code", "community", "data-product", "game"],
+        "idea_domains": [
+            "salute e benessere personale", "educazione e apprendimento pratico",
+            "finanza personale e risparmio", "produttivit\u00e0 artigiani e freelance",
+            "creativit\u00e0: musica, arte, scrittura", "ambiente e sostenibilit\u00e0 quotidiana",
+            "sport, fitness e nutrizione", "cibo, cucina e ristorazione locale",
+            "gaming e comunit\u00e0 di giocatori", "burocrazia e documenti semplificati",
+            "HR, recruiting e carriera", "real estate e affitti",
+            "e-commerce verticale di nicchia", "genitori, famiglie e bambini",
+            "animali domestici", "artigianato, maker e DIY",
+            "musica e podcast indipendenti", "volontariato e terzo settore",
+            "developer tools", "viaggi, turismo locale e esperienze",
+        ],
+        "idea_varieties": [
+            "SaaS B2B classico (CRUD, dashboard, report, gestione \u2014 AI opzionale)",
+            "tool AI per nicchia specifica (non AI generico, ma applicato a un settore)",
+            "bot utility (Telegram/Discord \u2014 logica tradizionale o AI leggera)",
+            "community / marketplace verticale (domanda/offerta, matching umano, recensioni)",
+            "automazione tradizionale (webhook, schedule, notifiche, integrazioni API)",
+            "strumento per creator/developer/artigiani (template, generatori, calcolatori)",
+            "estensione browser (utility, produttivit\u00e0, integrazione)",
+            "piattaforma contenuti / educational (corsi, template, risorse)",
+            "mini-gioco web o mobile-web (single player o multiplayer leggero)",
+            "directory / catalogo verificato (elenchi, ricerca, filtri, profili)",
+            "e-commerce di nicchia (vetrina, carrello, pagamenti, dropshipping leggero)",
+            "automazione AI applicata (non AI generalista, ma risolve un problema preciso)",
+        ],
+        "mutation_types": [
+            "cambia il target di riferimento (stessa soluzione, utenti/settore diverso)",
+            "cambia il modello di business/pricing (es. subscription -> usage / marketplace -> commissioni)",
+            "applica la stessa idea a un dominio/settore completamente diverso",
+        ],
+        "common_keywords": [
+            "ai", "tool", "app", "api", "saas", "bot", "user", "data", "platform", "service",
+            "online", "web", "cloud", "auto", "strumento", "utente", "dati", "piattaforma",
+            "servizio", "sistema", "gestione", "management", "solution", "soluzione",
+            "assistant", "assistente", "intelligenza", "machine", "learning",
+            "tempo", "persona", "personale", "locale", "digitale", "sociale",
+            "rapido", "semplice", "facile", "veloce", "nuovo", "nuova",
+            "casa", "lavoro", "vita", "giorno", "mese", "anno",
+            "creare", "trovare", "avere", "fare", "essere", "potere",
+            "primo", "prima", "ogni", "altro", "altra", "stessa", "stesso",
+            "privacy", "sicurezza", "gratuito", "premium", "account",
+            "notifica", "aggiornamento", "download", "upload", "login",
+            "accesso", "ricerca", "filtro", "categoria", "profilo",
+            "messaggio", "chat", "email", "telefono", "mobile", "desktop",
+        ],
+    }
 
-# Adattamento dinamico della popolazione
-MIN_POP_SIZE = 3
-MAX_POP_SIZE = 12
-ADAPTIVE_LOOKBACK = 5   # quante generazioni guardare per il tasso di passaggio
+def load_config(config_path: str | None = None):
+    global CFG
+    path = config_path or os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+    if not os.path.exists(path):
+        return
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            file_cfg = json.load(f)
+        for k, v in file_cfg.items():
+            if k == "_comment":
+                continue
+            elif k == "prompts" and isinstance(v, dict):
+                if "prompts" not in CFG:
+                    CFG["prompts"] = {}
+                CFG["prompts"].update(v)
+            elif k == "generation_examples" and isinstance(v, list):
+                CFG["generation_examples"] = v
+            elif k == "idea_types" and isinstance(v, list):
+                CFG["idea_types"] = v
+            elif k == "idea_domains" and isinstance(v, list):
+                CFG["idea_domains"] = v
+            elif k == "idea_varieties" and isinstance(v, list):
+                CFG["idea_varieties"] = v
+            elif k == "mutation_types" and isinstance(v, list):
+                CFG["mutation_types"] = v
+            elif k == "common_keywords" and isinstance(v, list):
+                CFG["common_keywords"] = set(v)
+            else:
+                CFG[k] = v
+        cfg_dir = os.path.dirname(os.path.abspath(path))
+        if not os.path.isabs(CFG["instance_dir"]):
+            CFG["instance_dir"] = os.path.join(cfg_dir, CFG["instance_dir"])
+        print(f"[CONFIG] Caricata da {path} (instance_dir={CFG['instance_dir']})")
+    except Exception as e:
+        print(f"[CONFIG] Errore caricamento config {path}: {e}")
+
+def _apply_default_config():
+    """Applica eventuali default mancanti (liste, prompts) a CFG."""
+    defaults = _default_config()
+    for key, value in defaults.items():
+        if key == "prompts" and isinstance(value, dict):
+            if "prompts" not in CFG:
+                CFG["prompts"] = {}
+            for pk, pv in value.items():
+                CFG["prompts"].setdefault(pk, pv)
+        elif key == "common_keywords" and isinstance(value, list):
+            CFG.setdefault("common_keywords", set(value))
+        elif isinstance(value, list):
+            CFG.setdefault(key, list(value))
+        else:
+            CFG.setdefault(key, value)
+
+def init_paths():
+    base = CFG["instance_dir"]
+    CFG["_output_dir"] = os.path.join(base, CFG.get("output_dir", "output"))
+    CFG["_memory_file"] = os.path.join(base, CFG.get("memory_file", "memory.json"))
+    CFG["_brief_file"] = os.path.join(base, CFG.get("brief_file", "brief.md"))
+    CFG["_evol_dir"] = os.path.join(CFG["_output_dir"], "evolution")
+    CFG["_log_dir"] = os.path.join(CFG["_output_dir"], "logs")
+    CFG["_accepted_dir"] = os.path.join(CFG["_output_dir"], "accepted")
+    CFG["_dashboard_data_file"] = os.path.join(CFG["_output_dir"], "dashboard_data.json")
+    CFG["_embedding_cache_file"] = os.path.join(CFG["_output_dir"], "embeddings_cache.json")
+    for d in [CFG["_evol_dir"], CFG["_log_dir"], CFG["_accepted_dir"]]:
+        os.makedirs(d, exist_ok=True)
 
 # =========================
 # LOGGING (stdout + file)
 # =========================
 
-_log_file = os.path.join(LOG_DIR, f"run_{datetime.now().strftime('%Y-%m-%d')}.log")
+_log_file = None  # set da init_paths() + main()
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="[%(asctime)s] %(message)s",
-    datefmt="%H:%M:%S",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler(_log_file, encoding="utf-8"),
-    ],
-)
+def _setup_logging():
+    global _log_file
+    _log_file = os.path.join(CFG["_log_dir"], f"run_{datetime.now().strftime('%Y-%m-%d')}.log")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(asctime)s] %(message)s",
+        datefmt="%H:%M:%S",
+        handlers=[
+            logging.StreamHandler(),
+            logging.FileHandler(_log_file, encoding="utf-8"),
+        ],
+    )
+
+
 
 def log(msg: str):
     logging.info(msg)
@@ -175,7 +230,7 @@ def log(msg: str):
 
 def load_brief() -> str:
     try:
-        with open(BRIEF_FILE, "r", encoding="utf-8") as f:
+        with open(_brief_path(), "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
         return "Genera idee originali e realizzabili da un singolo developer."
@@ -195,7 +250,7 @@ def _migrate_legacy(data: dict) -> dict:
             if isinstance(idea, str):
                 words = re.findall(r"[a-zA-ZÀ-ÿ]{4,}", idea)
                 concepts.extend(w.lower() for w in words[:20])
-        data["concepts"] = list(dict.fromkeys(concepts))[:MAX_MEMORY_CONCEPTS]
+        data["concepts"] = list(dict.fromkeys(concepts))[:CFG["max_memory_concepts"]]
         migrated = True
     if "types_history" not in data:
         data["types_history"] = []
@@ -218,10 +273,10 @@ def load_memory() -> dict:
         "recent_ideas":       [],      # testi completi delle ultime idee accettate
         "varieties_history":  [],      # varietà usate di recente
     }
-    if not os.path.exists(MEMORY_FILE):
+    if not os.path.exists(CFG["_memory_file"]):
         return defaults
     try:
-        with open(MEMORY_FILE, "r", encoding="utf-8") as f:
+        with open(CFG["_memory_file"], "r", encoding="utf-8") as f:
             data = json.load(f)
     except (json.JSONDecodeError, OSError):
         log("memory.json corrotto — inizializzato da zero")
@@ -234,7 +289,7 @@ def load_memory() -> dict:
 
 
 def save_memory(m: dict):
-    with open(MEMORY_FILE, "w", encoding="utf-8") as f:
+    with open(CFG["_memory_file"], "w", encoding="utf-8") as f:
         json.dump(m, f, indent=2, ensure_ascii=False)
 
 # =========================
@@ -249,22 +304,24 @@ def save_memory(m: dict):
 
 def ask(system: str, user: str) -> str:
     """Chiama Ollama con retry. think=False disabilita il thinking mode."""
-    for attempt in range(MAX_RETRY):
+    max_retry = CFG["max_retry"]
+    timeout = CFG["llm_timeout"]
+    for attempt in range(max_retry):
         result: list[str] = []
         exc:    list[Exception] = []
 
         def _call():
             try:
                 resp = chat(
-                    model=MODEL,
+                    model=CFG["model"],
                     messages=[
                         {"role": "system", "content": system},
                         {"role": "user",   "content": user},
                     ],
-                    think=False,          # disabilita thinking mode (qwen3/deepseek)
+                    think=False,
                     options={
-                        "num_ctx":    4096,   # contesto ridotto = risposta più veloce
-                        "temperature": 0.8,
+                        "num_ctx":    CFG.get("num_ctx", 4096),
+                        "temperature": CFG.get("temperature", 0.8),
                     },
                 )
                 result.append(resp["message"]["content"])
@@ -273,19 +330,17 @@ def ask(system: str, user: str) -> str:
 
         t = threading.Thread(target=_call, daemon=True)
         t.start()
-        t.join(timeout=LLM_TIMEOUT)
+        t.join(timeout=timeout)
 
         if t.is_alive():
-            log(f"LLM timeout ({LLM_TIMEOUT}s) al tentativo {attempt + 1}/{MAX_RETRY}")
-            # Il thread è daemon: verrà terminato quando il processo finisce.
-            # Non creiamo un nuovo thread per la stessa chiamata, aspettiamo.
-            if attempt < MAX_RETRY - 1:
+            log(f"LLM timeout ({timeout}s) al tentativo {attempt + 1}/{max_retry}")
+            if attempt < max_retry - 1:
                 time.sleep(3)
             continue
 
         if exc:
-            log(f"LLM error (tentativo {attempt + 1}/{MAX_RETRY}): {exc[0]}")
-            if attempt < MAX_RETRY - 1:
+            log(f"LLM error (tentativo {attempt + 1}/{max_retry}): {exc[0]}")
+            if attempt < max_retry - 1:
                 time.sleep(3)
             continue
 
@@ -299,25 +354,27 @@ def ask(system: str, user: str) -> str:
 # =========================
 
 def get_next_idea_type(memory: dict) -> str:
-    history  = memory.get("types_history", [])
-    recent   = set(history[-3:])
-    available = [t for t in IDEA_TYPES if t not in recent]
-    return random.choice(available or IDEA_TYPES)
+    types   = CFG.get("idea_types", [])
+    history = memory.get("types_history", [])
+    recent  = set(history[-3:])
+    available = [t for t in types if t not in recent]
+    return random.choice(available or types)
 
 
 def get_next_domain(memory: dict) -> str:
-    history  = memory.get("domains_history", [])
-    recent   = set(history[-5:])
-    available = [d for d in IDEA_DOMAINS if d not in recent]
-    return random.choice(available or IDEA_DOMAINS)
+    domains = CFG.get("idea_domains", [])
+    history = memory.get("domains_history", [])
+    recent  = set(history[-5:])
+    available = [d for d in domains if d not in recent]
+    return random.choice(available or domains)
 
 
 def get_next_variety(memory: dict) -> str:
-    """Sceglie una varietà di idea evitando le ultime 3 usate."""
-    history = memory.get("varieties_history", [])
-    recent  = set(history[-3:])
-    available = [v for v in IDEA_VARIETIES if v not in recent]
-    return random.choice(available or IDEA_VARIETIES)
+    varieties = CFG.get("idea_varieties", [])
+    history   = memory.get("varieties_history", [])
+    recent    = set(history[-3:])
+    available = [v for v in varieties if v not in recent]
+    return random.choice(available or varieties)
 
 # =========================
 # GENERAZIONE IDEA
@@ -329,17 +386,19 @@ def generate_idea(memory: dict, gen: int = 0) -> tuple[str, str, str, str]:
     variety    = get_next_variety(memory)
 
     retry_hint = memory.get("_retry_hint")
+    p          = CFG.get("prompts", {})
 
     last_concepts = ", ".join(memory["concepts"][-25:])
     last_types    = ", ".join(memory["types_history"][-6:])
     last_domains  = ", ".join(memory.get("domains_history", [])[-6:])
     recent_ideas  = memory.get("recent_ideas", [])[-3:]
+    examples      = "\n".join(f"- {e}" for e in CFG.get("generation_examples", []))
+    brief_label   = "LINEE GUIDA DA SEGUIRE OBBLIGATORIAMENTE" if CFG.get("brief_mode") == "strict" else "usalo come ispirazione"
 
-    idea = ask(
-        "Sei un generatore di idee startup originali, concrete e molto varie. "
-        "EVITA di ripeterti: se un'idea è già stata generata, cambia completamente "
-        "approccio, target e meccanica.",
-        f"""BRIEF (usalo come ispirazione):
+    system = p.get("generate_system", DEFAULT_CFG.get("prompts", {}).get("generate_system", ""))
+    output_fmt = p.get("generate_output", DEFAULT_CFG.get("prompts", {}).get("generate_output", ""))
+
+    user = f"""BRIEF ({brief_label}):
 {BRIEF}
 
 VINCOLI:
@@ -355,16 +414,7 @@ COSA EVITARE (per non ripeterti):
 - Soluzioni enterprise o che richiedono hardware
 
 ESEMPI DI IDEE AD ALTO POTENZIALE (ispirati ma non copiare):
-- Piattaforma verticale per una nicchia SPECIFICA con monetizzazione chiara e competitor assenti
-- Tool che risolve un problema frustrante per un target ben definito (non "tutti")
-- Marketplace iper-locale che collega domanda/offerta in un settore con pochi intermediari
-- Bot/servizio che automatizza un processo manuale doloroso per professionisti di nicchia
-- Directory verificata con recensioni autentiche in un settore dove non esistono
-- SaaS B2B per un settore artigianale specifico (non "ristoranti" ma "pasticcerie artigianali")
-- Piattaforma educational che risolve un PROBLEMA SPECIFICO per un target preciso
-- Tool AI che applica ML a un DATASET DI NICCHIA (non AI generalista)
-- Mini-gioco sociale con meccanica virale e monetizzazione non invasiva
-- Community verticale con curation umana in un settore frammentato
+{examples}
 
 TIPI RECENTI (non ripetere): {last_types}
 DOMINI RECENTI (non ripetere): {last_domains}
@@ -380,13 +430,9 @@ REGOLE:
 - NON ripetere concept già usati
 - Sii CREATIVO — mescola domini, usa analogie, pensa laterale
 
-OUTPUT (conciso, max 200 parole):
-Nome: ...
-Problema: ...
-Soluzione: ...
-Target: ...
-Monetizzazione: ..."""
-    )
+{output_fmt}"""
+
+    idea = ask(system, user)
     return idea, idea_type, domain, variety
 
 # =========================
@@ -408,30 +454,23 @@ def _parse_score_json(res: str) -> tuple[int, str, list[str]]:
         return 0, "errore parsing", []
 
 
+def _eval_prompt(p: dict, prefix: str, idea: str) -> tuple[str, str]:
+    """Costruisce system + user prompt per valutazioni."""
+    system = p.get(f"{prefix}_system", "")
+    criteria = p.get(f"{prefix}_criteria", "")
+    anchors = p.get(f"{prefix}_anchors", "")
+    output_fmt = p.get(f"{prefix}_output", "")
+    user = f"IDEA:\n{idea}\n\nValuta SOLO questi criteri:\n{criteria}\n\nANCORE: {anchors}\n\n{output_fmt}"
+    return system, user
+
+
 def evaluate_market(idea: str) -> tuple[int, str, list[str]]:
     """Valutazione focalizzata su MERCATO: target, monetizzazione, competitor."""
     if not idea:
         return 0, "idea vuota", []
-    res = ask(
-        "Sei un analista di mercato con 20 anni di esperienza. "
-        "USA TUTTA LA SCALA 0-100. Sii selettivo: 1 idea su 10 merita oltre 70. "
-        "La maggior parte delle idee (anche buone) sta tra 30 e 55. "
-        "Solo idee con nicchia chirurgica, monetizzazione immediata e "
-        "mercato reale non saturo meritano 70+.",
-        f"""IDEA:
-{idea}
-
-Valuta SOLO questi criteri:
-1. TARGET: nicchia specifica e reale (alto) vs target generico (basso)
-2. MONETIZZAZIONE: modello concreto e rapido (alto) vs vago (basso)
-3. MERCATO: spazio reale non saturo (alto) vs mercato affollato (basso)
-4. COMPETITOR: vantaggio chiaro (alto) vs commodity (basso)
-
-ANCORE: 10=inesistente, 25=debole, 50=discreto, 75=buono, 95=eccellente
-
-Rispondi SOLO con JSON:
-{{"score": <0-100>, "weakness": "<max 15 parole>", "concepts": ["<kw1>","<kw2>","<kw3>"]}}"""
-    )
+    p = CFG.get("prompts", {})
+    system, user = _eval_prompt(p, "market", idea)
+    res = ask(system, user)
     return _parse_score_json(res)
 
 
@@ -439,32 +478,17 @@ def evaluate_technical(idea: str) -> tuple[int, str, list[str]]:
     """Valutazione focalizzata su FATTIBILITÀ: originalità, complessità, stack."""
     if not idea:
         return 0, "idea vuota", []
-    res = ask(
-        "Sei un CTO con esperienza in startup. "
-        "USA TUTTA LA SCALA 0-100. Sii selettivo: 1 idea su 10 merita oltre 70. "
-        "La maggior parte delle idee sta tra 30 e 55. Solo idee veramente "
-        "originali, semplici da costruire e senza rischi esterni meritano 70+.",
-        f"""IDEA:
-{idea}
-
-Valuta SOLO questi criteri:
-1. ORIGINALITÀ: genuinamente nuova (alto) vs ennesima variante (basso)
-2. FATTIBILITÀ: realizzabile da 1 dev in 2 settimane (alto) vs complesso (basso)
-3. COMPLESSITÀ: stack semplice (alto) vs infrastruttura complessa (basso)
-4. RISCHIO: autonomo (alto) vs dipende da API/dati esterni (basso)
-
-ANCORE: 10=banale e complessa, 25=già vista, 50=onesta, 75=originale e realizzabile, 95=brillante e semplicissima
-
-Rispondi SOLO con JSON:
-{{"score": <0-100>, "weakness": "<max 15 parole>", "concepts": ["<kw1>","<kw2>","<kw3>"]}}"""
-    )
+    p = CFG.get("prompts", {})
+    system, user = _eval_prompt(p, "technical", idea)
+    res = ask(system, user)
     return _parse_score_json(res)
 
 
 def _widen_score(raw: float) -> float:
-    """Mappa [35, 80] → [10, 95] — idee eccellenti (raw 75+) raggiungono 85+."""
-    lo, hi = 35.0, 80.0
-    target_lo, target_hi = 10.0, 95.0
+    lo = CFG.get("widen_lo", 35.0)
+    hi = CFG.get("widen_hi", 80.0)
+    target_lo = CFG.get("widen_target_lo", 10.0)
+    target_hi = CFG.get("widen_target_hi", 95.0)
     if raw <= lo:
         return max(0.0, target_lo * (raw / lo))
     if raw >= hi:
@@ -500,26 +524,22 @@ def reality_and_competition(idea: str) -> tuple[str, int]:
     if not idea:
         return "", 50
 
+    p = CFG.get("prompts", {})
+    system = p.get("competition_system", "")
+    questions = p.get("competition_questions", "")
+    anchors = p.get("competition_anchors", "")
+    output_fmt = p.get("competition_output", "")
+
     res = ask(
-        "Sei un analista che cerca SPAZI VUOTI. Sii selettivo: "
-        "1 idea su 10 ha un competition_score > 65. La maggior parte "
-        "ha concorrenza significativa (score 30-55). "
-        "USA TUTTA LA SCALA 0-100. Identifica competitor reali.",
+        system,
         f"""IDEA:
 {idea}
 
 Analisi (concreta, cita competitor reali):
-1. Competitori diretti: esistono soluzioni IDENTICHE o solo simili?
-2. Domanda: reale o hype? Ci sono community/gruppi che ne parlano?
-3. Barriere: quanto è difficile per altri copiare l'idea?
-4. Spazio: questa nicchia è servita o ignorata dai competitor?
-5. Competition_score: 90=nicchia vergine, 70=poca concorrenza, 50=mediamente saturo, 30=molto saturo
+{questions}
+5. Competition_score: {anchors}
 
-Rispondi SOLO con JSON:
-{{
-  "analysis": "<analisi concisa>",
-  "competition_score": <intero 0-100>
-}}"""
+{output_fmt}"""
     )
 
     try:
@@ -540,13 +560,13 @@ Rispondi SOLO con JSON:
 # =========================
 
 def enrich_and_swot(idea: str, weak: str, reality: str) -> str:
-    """Arricchisce un'idea con dettagli implementativi e analisi SWOT.
-    
-    Chiamato solo per idee con score >= ENRICH_SCORE_THRESHOLD.
-    """
+    """Arricchisce un'idea con dettagli implementativi e analisi SWOT."""
+    p = CFG.get("prompts", {})
+    system = p.get("enrichment_system", "")
+    fmt = p.get("enrichment_format", "")
+
     res = ask(
-        "Sei un senior product manager. Analizza l'idea e fornisci dettagli "
-        "concreti per passare all'implementazione.",
+        system,
         f"""IDEA:
 {idea}
 
@@ -555,12 +575,7 @@ ANALISI MERCATO: {reality}
 
 Fornisci in formato conciso:
 
-**Stack tecnologico suggerito** (linguaggi, framework, servizi specifici)
-**3 funzionalità MVP** (essenziali per il lancio)
-**Canale acquisizione** (come trovare i primi 100 utenti)
-**SWAT veloce** (Strengths, Weaknesses, Opportunities, Threats — 1 punto ciascuno)
-
-Output max 200 parole, concreto e specifico."""
+{fmt}"""
     )
     return res
 
@@ -581,17 +596,17 @@ def fitness(idea: str) -> tuple[float, str, str, list[str]]:
 
 _mutation_idx = 0
 def structured_mutate(idea: str, weak: str) -> str:
-    """Mutazione strutturata: cicla su 3 tipi di trasformazione.
-    
-    Invece di chiedere genericamente 'crea una variante', guida il LLM
-    verso un tipo specifico di cambiamento.
-    """
     global _mutation_idx
-    mutation_type = MUTATION_TYPES[_mutation_idx % len(MUTATION_TYPES)]
+    mutation_types = CFG.get("mutation_types", [])
+    mutation_type = mutation_types[_mutation_idx % len(mutation_types)]
     _mutation_idx += 1
 
+    p = CFG.get("prompts", {})
+    system = p.get("mutation_system", "")
+    output_fmt = p.get("mutation_output", "")
+
     return ask(
-        "Sei un product architect creativo. Trasforma l'idea seguendo il tipo di mutazione indicato.",
+        system,
         f"""IDEA ORIGINALE:
 {idea}
 
@@ -601,9 +616,7 @@ PROBLEMA DA RISOLVERE:
 TIPO DI MUTAZIONE:
 {mutation_type}
 
-Crea una variante seguendo STRETTAMENTE questo tipo di mutazione.
-L'idea risultante deve essere diversa dall'originale nel modo indicato.
-Output conciso (max 150 parole): Nome, Problema, Soluzione, Target."""
+{output_fmt}"""
     )
 
 # =========================
@@ -611,27 +624,28 @@ Output conciso (max 150 parole): Nome, Problema, Soluzione, Target."""
 # =========================
 
 def is_similar_by_concepts(concepts: list[str], memory: dict) -> bool:
-    """Controlla similarità usando i concetti già estratti da evaluate_idea."""
     if not concepts:
         return False
     known     = {k.lower() for k in memory["concepts"]}
+    common    = CFG.get("common_keywords", set())
+    threshold = CFG.get("concept_similarity_threshold", 3)
     rare_hits = sum(
         1 for c in concepts
-        if c.lower() in known and c.lower() not in COMMON_KEYWORDS
+        if c.lower() in known and c.lower() not in common
     )
-    return rare_hits >= 3  # servono almeno 3 concetti rari in comune
+    return rare_hits >= threshold
 
 
 def is_similar_to_recent_ideas(idea: str, memory: dict, threshold: int = 6) -> bool:
-    """Confronto testuale con le ultime idee accettate."""
     recent = memory.get("recent_ideas", [])
     if not recent or not idea:
         return False
-    new_words = {w.lower() for w in re.findall(r"[a-zA-ZÀ-ÿ]{4,}", idea) if w.lower() not in COMMON_KEYWORDS}
+    common = CFG.get("common_keywords", set())
+    new_words = {w.lower() for w in re.findall(r"[a-zA-ZÀ-ÿ]{4,}", idea) if w.lower() not in common}
     if len(new_words) < 8:
         return False
     for prev in recent:
-        prev_words = {w.lower() for w in re.findall(r"[a-zA-ZÀ-ÿ]{4,}", prev) if w.lower() not in COMMON_KEYWORDS}
+        prev_words = {w.lower() for w in re.findall(r"[a-zA-ZÀ-ÿ]{4,}", prev) if w.lower() not in common}
         if len(new_words & prev_words) >= threshold:
             return True
     return False
@@ -653,7 +667,7 @@ def get_embedding(text: str, cache: dict | None = None) -> list[float]:
     if cache is not None and h in cache:
         return cache[h]
     try:
-        resp = embed(model=EMBED_MODEL, input=text[:800])
+        resp = embed(model=CFG.get("embed_model", "all-minilm"), input=text[:800])
         emb = resp["embeddings"][0]
         if cache is not None:
             cache[h] = emb
@@ -672,39 +686,30 @@ def cosine_similarity(a: list[float], b: list[float]) -> float:
 
 
 def compute_novelty_bonus(idea_type: str, domain: str, variety: str, memory_snapshot: dict) -> float:
-    """Bonus per idee che esplorano varietà o domini poco usati.
-    
-    Incoraggia il sistema a non fossilizzarsi sulle stesse combinazioni.
-    Bonus maggiorato se ENTRAMBI variety e domain sono nuovi.
-    """
     bonus = 0.0
     v_hist = memory_snapshot.get("varieties_history", [])
     d_hist = memory_snapshot.get("domains_history", [])
     v_new = variety and v_hist.count(variety) <= 1
     d_new = domain and d_hist.count(domain) <= 1
     if v_new:
-        bonus += NOVELTY_VARIETY_BONUS
+        bonus += CFG.get("novelty_variety_bonus", 3)
     if d_new:
-        bonus += NOVELTY_DOMAIN_BONUS
+        bonus += CFG.get("novelty_domain_bonus", 2)
     if v_new and d_new:
-        bonus += 2  # compound bonus per combinazione completamente nuova
-    return min(bonus, 7.0)
+        bonus += CFG.get("compound_bonus", 2)
+    return min(bonus, CFG.get("max_novelty_bonus", 7.0))
 
 
 def is_similar_by_embedding(idea: str, memory_snapshot: dict) -> bool:
-    """Similarità semantica via cosine similarity tra embedding.
-    
-    Molto più accurata del keyword matching — cattura idee che usano
-    parole diverse ma concettualmente identiche.
-    """
     recent = memory_snapshot.get("_recent_embeddings", [])
     if len(recent) < 1 or not idea:
         return False
     emb = get_embedding(idea)
     if not emb:
         return False
+    threshold = CFG.get("embed_sim_threshold", 0.85)
     for prev_emb in recent:
-        if cosine_similarity(emb, prev_emb) > EMBED_SIM_THRESHOLD:
+        if cosine_similarity(emb, prev_emb) > threshold:
             return True
     return False
 
@@ -726,7 +731,7 @@ def update_memory(population: list[dict], memory: dict, embed_cache: dict | None
         if item.get("idea") and embed_cache is not None:
             get_embedding(item["idea"], cache=embed_cache)
 
-    memory["concepts"]          = list(dict.fromkeys(memory["concepts"]))[-MAX_MEMORY_CONCEPTS:]
+    memory["concepts"]          = list(dict.fromkeys(memory["concepts"]))[-CFG.get("max_memory_concepts", 300):]
     memory["types_history"]     = memory["types_history"][-60:]
     memory["domains_history"]   = memory["domains_history"][-60:]
     memory["varieties_history"] = memory["varieties_history"][-30:]
@@ -744,11 +749,13 @@ def update_memory(population: list[dict], memory: dict, embed_cache: dict | None
 # =========================
 
 def update_hall_of_fame(gen: int, population: list[dict], memory: dict):
+    hof_score = CFG.get("hof_score", 85)
+    accepted_dir = CFG["_accepted_dir"]
     for item in population:
-        if item["score"] >= HOF_SCORE:
+        if item["score"] >= hof_score:
             ts    = datetime.now().strftime("%Y%m%d_%H%M%S")
             fname = f"hof_gen{gen:04d}_{ts}_score{item['score']:.0f}.json"
-            path  = os.path.join(ACCEPT_DIR, fname)
+            path  = os.path.join(accepted_dir, fname)
             record = {
                 "generation": gen,
                 "timestamp":  datetime.now().isoformat(),
@@ -780,7 +787,7 @@ def save_best(gen: int, pop: list[dict]):
     if not pop:
         return
     best = max(pop, key=lambda x: x["score"])
-    path = os.path.join(EVOL_DIR, f"gen_{gen:04d}_best.md")
+    path = os.path.join(CFG["_evol_dir"], f"gen_{gen:04d}_best.md")
     with open(path, "w", encoding="utf-8") as f:
         f.write(f"# Generazione {gen} — Score: {best['score']:.1f}\n\n")
         f.write(f"**Tipo:** {best.get('type', 'N/A')}  |  ")
@@ -803,9 +810,10 @@ def save_best(gen: int, pop: list[dict]):
 # =========================
 
 def load_dashboard_data() -> dict:
-    if os.path.exists(DASHBOARD_DATA_FILE):
+    path = CFG["_dashboard_data_file"]
+    if os.path.exists(path):
         try:
-            with open(DASHBOARD_DATA_FILE, "r", encoding="utf-8") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             pass
@@ -840,11 +848,11 @@ def save_dashboard_data(gen: int, population: list[dict], memory: dict, total_ca
     })
     data["last_updated"] = datetime.now().isoformat()
     data["current_gen"]  = gen
-    data["min_score"]    = MIN_SCORE
-    data["hof_score"]    = HOF_SCORE
+    data["min_score"]    = CFG.get("min_score", 35)
+    data["hof_score"]    = CFG.get("hof_score", 85)
     data["hall_of_fame"] = memory.get("hall_of_fame", [])
 
-    with open(DASHBOARD_DATA_FILE, "w", encoding="utf-8") as f:
+    with open(CFG["_dashboard_data_file"], "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 # =========================
@@ -858,17 +866,19 @@ def _start_server(output_dir: str):
         def log_message(self, fmt, *args):
             pass
 
+    port = CFG.get("port", 8080)
     try:
-        with socketserver.TCPServer(("", DASHBOARD_PORT), QuietHandler) as httpd:
+        with socketserver.TCPServer(("", port), QuietHandler) as httpd:
             httpd.serve_forever()
     except OSError:
-        log(f"Porta {DASHBOARD_PORT} gia' in uso — dashboard non disponibile")
+        log(f"Porta {port} gia' in uso — dashboard non disponibile")
 
 
 def start_dashboard_server():
-    t = threading.Thread(target=_start_server, args=(OUTPUT_DIR,), daemon=True)
+    port = CFG.get("port", 8080)
+    t = threading.Thread(target=_start_server, args=(CFG["_output_dir"],), daemon=True)
     t.start()
-    log(f"Dashboard -> http://localhost:{DASHBOARD_PORT}/dashboard.html")
+    log(f"Dashboard -> http://localhost:{port}/dashboard.html")
 
 # =========================
 # PARALLEL CANDIDATE WORKER
@@ -882,7 +892,7 @@ def start_dashboard_server():
 def _generate_candidate(idx: int, memory_snapshot: dict) -> dict | None:
     try:
         gen = memory_snapshot.get("_gen", 0)
-        current_min = memory_snapshot.get("_min_score", MIN_SCORE)
+        current_min = memory_snapshot.get("_min_score", CFG.get("min_score", 35))
 
         for attempt in range(2):  # auto-retry su similarità
             # 1 — Genera idea
@@ -913,10 +923,10 @@ def _generate_candidate(idx: int, memory_snapshot: dict) -> dict | None:
             reality, comp = reality_and_competition(idea)
 
             # 5 — Score composito + novelty bonus (cap a 100)
-            # vc è già widened dentro evaluate_composite, widiamo solo comp
-            # Peso: VC 75% (qualità idea), Competition 25% (mercato)
+            vc_weight = CFG.get("vc_weight", 0.75)
+            comp_weight = CFG.get("comp_weight", 0.25)
             comp_w = _widen_score(float(comp))
-            score = (vc * 0.75) + (comp_w * 0.25)
+            score = (vc * vc_weight) + (comp_w * comp_weight)
             novelty_bonus = compute_novelty_bonus(idea_type, domain, variety, memory_snapshot)
             score = min(100.0, score + novelty_bonus)
 
@@ -953,21 +963,22 @@ def _generate_candidate(idx: int, memory_snapshot: dict) -> dict | None:
 
 def evolve(population: list[dict]) -> list[dict]:
     population.sort(key=lambda x: x["score"], reverse=True)
-    n_survivors = min(SURVIVORS, len(population))
+    n_survivors = min(CFG.get("survivors", 3), len(population))
     survivors   = population[:n_survivors]
 
     new_pop = []
+    vc_weight = CFG.get("vc_weight", 0.75)
+    comp_weight = CFG.get("comp_weight", 0.25)
     for s in survivors:
         mutated = structured_mutate(s["idea"], s.get("weak", ""))
         if not mutated:
             new_pop.append(s)
             continue
 
-        # Valutazione composita del mutante (cap a 100)
         vc, weak, concepts = evaluate_composite(mutated)
         reality, comp      = reality_and_competition(mutated)
         comp_w             = _widen_score(float(comp))
-        score              = min(100.0, (vc * 0.75) + (comp_w * 0.25))
+        score              = min(100.0, (vc * vc_weight) + (comp_w * comp_weight))
 
         new_pop.append({
             "idea":      mutated,
@@ -987,8 +998,8 @@ def evolve(population: list[dict]) -> list[dict]:
 # =========================
 
 def parse_args():
-    """CLI arguments per override rapido della configurazione."""
     p = argparse.ArgumentParser(description="HydraThinker — Evolutionary Idea Engine")
+    p.add_argument("--config", default=None, help="Percorso file config.json (default: config.json in script dir)")
     p.add_argument("--model", default=None, help="Modello Ollama (es. qwen3:32b)")
     p.add_argument("--pop", type=int, default=None, help="Popolazione per generazione")
     p.add_argument("--workers", type=int, default=None, help="Worker paralleli")
@@ -1001,34 +1012,33 @@ def parse_args():
 
 
 def apply_cli_args(args):
-    """Applica override da CLI sulle costanti globali."""
-    global MODEL, POP_SIZE, MAX_WORKERS, SLEEP, MIN_SCORE, DASHBOARD_PORT, BRIEF_FILE
-    if args.model:       MODEL = args.model
-    if args.pop:         POP_SIZE = args.pop
-    if args.workers:     MAX_WORKERS = args.workers
-    if args.sleep:       SLEEP = args.sleep
-    if args.min_score:   MIN_SCORE = args.min_score
-    if args.port:        DASHBOARD_PORT = args.port
-    if args.brief:       BRIEF_FILE = args.brief
+    if args.model:       CFG["model"] = args.model
+    if args.pop:         CFG["pop_size"] = args.pop
+    if args.workers:     CFG["max_workers"] = args.workers
+    if args.sleep:       CFG["sleep"] = args.sleep
+    if args.min_score:   CFG["min_score"] = args.min_score
+    if args.port:        CFG["port"] = args.port
+    if args.brief:       CFG["_brief_file"] = os.path.abspath(args.brief)
     if args.reset:
         log("Reset memoria forzato da CLI")
-        for f_path in [MEMORY_FILE, DASHBOARD_DATA_FILE, EMBEDDING_CACHE_FILE]:
+        for path_key in ["_memory_file", "_dashboard_data_file", "_embedding_cache_file"]:
             try:
-                os.remove(f_path)
-            except FileNotFoundError:
+                os.remove(CFG[path_key])
+            except (FileNotFoundError, KeyError):
                 pass
-        # Svuota anche le cartelle output
-        for d in [EVOL_DIR, LOG_DIR, ACCEPT_DIR]:
-            for ff in os.listdir(d):
-                fp = os.path.join(d, ff)
-                if os.path.isfile(fp):
-                    os.remove(fp)
+        for dir_key in ["_evol_dir", "_log_dir", "_accepted_dir"]:
+            d = CFG.get(dir_key)
+            if d and os.path.isdir(d):
+                for ff in os.listdir(d):
+                    fp = os.path.join(d, ff)
+                    if os.path.isfile(fp):
+                        os.remove(fp)
 
 
 def load_embedding_cache() -> dict:
     """Carica cache embedding da disco."""
     try:
-        with open(EMBEDDING_CACHE_FILE, "r", encoding="utf-8") as f:
+        with open(CFG["_embedding_cache_file"], "r", encoding="utf-8") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
@@ -1037,7 +1047,7 @@ def load_embedding_cache() -> dict:
 def save_embedding_cache(cache: dict):
     """Salva cache embedding su disco (solo se ci sono novità)."""
     try:
-        with open(EMBEDDING_CACHE_FILE, "w", encoding="utf-8") as f:
+        with open(CFG["_embedding_cache_file"], "w", encoding="utf-8") as f:
             json.dump(cache, f)
     except Exception:
         pass
@@ -1045,22 +1055,37 @@ def save_embedding_cache(cache: dict):
 
 def main():
     args = parse_args()
+
+    # 1 — Carica config da file (aggiorna CFG con instance_dir)
+    load_config(args.config)
+    _apply_default_config()
+
+    # 2 — Init percorsi e logging (dopo config, così instance_dir è corretto)
+    init_paths()
+    _setup_logging()
+
+    # 3 — Rigenera BRIEF (potrebbe essere cambiato il percorso)
+    global BRIEF
+    BRIEF = load_brief()
+
+    # 4 — CLI override
     apply_cli_args(args)
+
     memory = load_memory()
     embed_cache = load_embedding_cache()
     gen = 0
 
-    # Variabili per adattamento dinamico
-    current_pop = POP_SIZE
+    current_pop = CFG.get("pop_size", 6)
     pass_rates = []
 
     log("THINKER ULTRA v10 STARTED")
-    log(f"MODEL={MODEL}  POP={current_pop}  WORKERS={MAX_WORKERS}  MIN_SCORE={MIN_SCORE}  HOF={HOF_SCORE}  TIMEOUT={LLM_TIMEOUT}s")
-    log(f"TYPES={len(IDEA_TYPES)}  DOMAINS={len(IDEA_DOMAINS)}  VARIETIES={len(IDEA_VARIETIES)}")
-    log(f"BASE_DIR -> {BASE_DIR}")
+    log(f"MODEL={CFG['model']}  POP={current_pop}  WORKERS={CFG.get('max_workers', 4)}  "
+        f"MIN_SCORE={CFG.get('min_score', 35)}  HOF={CFG.get('hof_score', 85)}  "
+        f"TIMEOUT={CFG.get('llm_timeout', 300)}s")
+    log(f"TYPES={len(CFG.get('idea_types', []))}  DOMAINS={len(CFG.get('idea_domains', []))}  "
+        f"VARIETIES={len(CFG.get('idea_varieties', []))}")
+    log(f"instance_dir={CFG['instance_dir']}")
     log(f"Log file -> {_log_file}")
-    if args.reset:
-        log("Memoria resettata — nuova run")
 
     start_dashboard_server()
 
@@ -1068,9 +1093,11 @@ def main():
         gen += 1
 
         # ── MIN_SCORE adattivo ──
+        adaptive_window = CFG.get("adaptive_window", 7)
+        median_mult = CFG.get("median_multiplier", 0.75)
         dashboard_data = load_dashboard_data()
         all_dashboard_gens = dashboard_data.get("generations", [])
-        recent_gens = all_dashboard_gens[-ADAPTIVE_WINDOW:]
+        recent_gens = all_dashboard_gens[-adaptive_window:]
         all_scores = []
         for g_entry in recent_gens:
             for idea_entry in g_entry.get("ideas", []):
@@ -1078,30 +1105,35 @@ def main():
         if all_scores:
             all_scores.sort()
             median = all_scores[len(all_scores) // 2]
-            adaptive_min = max(35, min(70, round(median * 0.75)))
+            adaptive_min = max(30, min(70, round(median * median_mult)))
         else:
-            adaptive_min = MIN_SCORE
+            adaptive_min = CFG.get("min_score", 35)
 
         # ── POP_SIZE adattivo ──
+        adaptive_lookback = CFG.get("adaptive_lookback", 5)
+        min_pop = CFG.get("min_pop_size", 3)
+        max_pop = CFG.get("max_pop_size", 12)
+        pass_rate_min = CFG.get("pass_rate_min", 0.4)
+        pass_rate_max = CFG.get("pass_rate_max", 0.85)
         if len(all_dashboard_gens) >= 2:
             recent_pass_rates = []
-            for g_entry in all_dashboard_gens[-ADAPTIVE_LOOKBACK:]:
-                total = g_entry.get("total_candidates", POP_SIZE)
+            for g_entry in all_dashboard_gens[-adaptive_lookback:]:
+                total = g_entry.get("total_candidates", current_pop)
                 valid = len(g_entry.get("ideas", []))
                 recent_pass_rates.append(valid / max(total, 1))
-            avg_pass = sum(recent_pass_rates) / len(recent_pass_rates)
-            if avg_pass < 0.4 and current_pop < MAX_POP_SIZE:
-                current_pop = min(current_pop + 1, MAX_POP_SIZE)
-                log(f"Pass rate {avg_pass:.0%} < 40% -> POP_SIZE={current_pop}")
-            elif avg_pass > 0.85 and current_pop > MIN_POP_SIZE:
-                current_pop = max(current_pop - 1, MIN_POP_SIZE)
-                log(f"Pass rate {avg_pass:.0%} > 85% -> POP_SIZE={current_pop}")
+            avg_pass = sum(recent_pass_rates) / len(recent_pass_rates) if recent_pass_rates else 1.0
+            if avg_pass < pass_rate_min and current_pop < max_pop:
+                current_pop = min(current_pop + 1, max_pop)
+                log(f"Pass rate {avg_pass:.0%} < {pass_rate_min:.0%} -> POP_SIZE={current_pop}")
+            elif avg_pass > pass_rate_max and current_pop > min_pop:
+                current_pop = max(current_pop - 1, min_pop)
+                log(f"Pass rate {avg_pass:.0%} > {pass_rate_max:.0%} -> POP_SIZE={current_pop}")
         else:
             avg_pass = 1.0
 
         log(f"\n=== GENERATION {gen} ===  [MIN={adaptive_min}  POP={current_pop}  pass={avg_pass:.0%}]")
 
-        # ── Embedding per idee recenti (dalla cache, no ricalcolo necessario) ──
+        # ── Embedding per idee recenti ──
         recent_embeddings = []
         for ridea in memory.get("recent_ideas", [])[-10:]:
             emb = get_embedding(ridea, cache=embed_cache)
@@ -1122,11 +1154,13 @@ def main():
             "recent_ideas":       list(memory.get("recent_ideas", [])),
         }
 
-        # ── Generazione parallela con timeout per candidato ──
+        # ── Generazione parallela ──
         population: list[dict] = []
         completed = 0
+        max_workers = CFG.get("max_workers", 4)
+        candidate_timeout = CFG.get("candidate_timeout", 600)
 
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {
                 executor.submit(_generate_candidate, i, memory_snapshot): i
                 for i in range(current_pop)
@@ -1134,7 +1168,7 @@ def main():
             for future in as_completed(futures):
                 completed += 1
                 try:
-                    result = future.result(timeout=CANDIDATE_TIMEOUT)
+                    result = future.result(timeout=candidate_timeout)
                     if result:
                         population.append(result)
                 except Exception as e:
@@ -1143,16 +1177,17 @@ def main():
 
         if not population:
             log("Popolazione vuota, skip evoluzione")
-            time.sleep(SLEEP)
+            time.sleep(CFG.get("sleep", 10))
             continue
 
         pass_rate = len(population) / current_pop
         log(f"Idee valide: {len(population)}/{current_pop} ({pass_rate:.0%})")
 
-        # ── Enrichment + SWOT per la miglior idea ──
+        # ── Enrichment + SWOT ──
+        enrich_threshold = CFG.get("enrich_score_threshold", 70)
         if population:
             best = max(population, key=lambda x: x["score"])
-            if best["score"] >= ENRICH_SCORE_THRESHOLD:
+            if best["score"] >= enrich_threshold:
                 log(f"Enrichment idea top (score={best['score']:.1f})...")
                 enrichment = enrich_and_swot(best["idea"], best.get("weak", ""), best.get("reality", ""))
                 best["enrichment"] = enrichment
@@ -1161,7 +1196,7 @@ def main():
         # ── Hall of Fame ──
         update_hall_of_fame(gen, population, memory)
 
-        # ── Salvataggio (PRIMA dell'evoluzione, così salviamo le idee originali) ──
+        # ── Salvataggio (PRIMA dell'evoluzione) ──
         save_best(gen, population)
         save_dashboard_data(gen, population, memory, total_candidates=current_pop)
 
@@ -1169,20 +1204,23 @@ def main():
         update_memory(population, memory, embed_cache)
         save_memory(memory)
 
-        # ── Evoluzione (dopo salvataggio, per non contaminare i dati di questa gen) ──
+        # ── Evoluzione ──
         try:
             population = evolve(population)
         except Exception as e:
             log(f"Errore evoluzione: {e}")
-            time.sleep(SLEEP)
+            time.sleep(CFG.get("sleep", 10))
             continue
 
         domains_used    = len(set(memory.get("domains_history", [])))
         varieties_used  = len(set(memory.get("varieties_history", [])))
-        log(f"Concetti: {len(memory['concepts'])}  Domini: {domains_used}/{len(IDEA_DOMAINS)}  Varietà: {varieties_used}/{len(IDEA_VARIETIES)}")
+        n_domains = len(CFG.get("idea_domains", []))
+        n_varieties = len(CFG.get("idea_varieties", []))
+        log(f"Concetti: {len(memory['concepts'])}  Domini: {domains_used}/{n_domains}  Variet\u00e0: {varieties_used}/{n_varieties}")
         log(f"Cache embedding: {len(embed_cache)} testi")
-        log(f"sleeping {SLEEP}s...")
-        time.sleep(SLEEP)
+        sleep_sec = CFG.get("sleep", 10)
+        log(f"sleeping {sleep_sec}s...")
+        time.sleep(sleep_sec)
 
 
 if __name__ == "__main__":

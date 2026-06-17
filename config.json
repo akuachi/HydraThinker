@@ -1,0 +1,165 @@
+{
+  "_comment": "HydraThinker — Configurazione completa. Tutti i percorsi relativi a instance_dir.",
+
+  "instance_dir": ".",
+  "memory_file": "memory.json",
+  "brief_file": "brief.md",
+  "output_dir": "output",
+
+  "model": "qwen3:14b",
+  "embed_model": "all-minilm",
+
+  "pop_size": 6,
+  "survivors": 3,
+  "sleep": 10,
+  "min_score": 35,
+  "hof_score": 85,
+  "max_workers": 4,
+  "max_retry": 2,
+  "llm_timeout": 300,
+  "candidate_timeout": 600,
+  "temperature": 0.8,
+  "num_ctx": 4096,
+  "max_memory_concepts": 300,
+
+  "embed_sim_threshold": 0.85,
+  "concept_similarity_threshold": 3,
+
+  "adaptive_window": 7,
+  "adaptive_lookback": 5,
+  "median_multiplier": 0.75,
+  "min_pop_size": 3,
+  "max_pop_size": 12,
+  "pass_rate_min": 0.4,
+  "pass_rate_max": 0.85,
+
+  "vc_weight": 0.75,
+  "comp_weight": 0.25,
+  "novelty_variety_bonus": 3,
+  "novelty_domain_bonus": 2,
+  "compound_bonus": 2,
+  "max_novelty_bonus": 7,
+  "enrich_score_threshold": 70,
+
+  "widen_lo": 35.0,
+  "widen_hi": 80.0,
+  "widen_target_lo": 10.0,
+  "widen_target_hi": 95.0,
+
+  "port": 8080,
+
+  "brief_mode": "inspiration",
+
+  "idea_types": [
+    "saas",
+    "bot",
+    "tool",
+    "marketplace",
+    "api",
+    "browser-ext",
+    "no-code",
+    "community",
+    "data-product",
+    "game"
+  ],
+
+  "idea_domains": [
+    "salute e benessere personale",
+    "educazione e apprendimento pratico",
+    "finanza personale e risparmio",
+    "produttivit\u00e0 artigiani e freelance",
+    "creativit\u00e0: musica, arte, scrittura",
+    "ambiente e sostenibilit\u00e0 quotidiana",
+    "sport, fitness e nutrizione",
+    "cibo, cucina e ristorazione locale",
+    "gaming e comunit\u00e0 di giocatori",
+    "burocrazia e documenti semplificati",
+    "HR, recruiting e carriera",
+    "real estate e affitti",
+    "e-commerce verticale di nicchia",
+    "genitori, famiglie e bambini",
+    "animali domestici",
+    "artigianato, maker e DIY",
+    "musica e podcast indipendenti",
+    "volontariato e terzo settore",
+    "developer tools",
+    "viaggi, turismo locale e esperienze"
+  ],
+
+  "idea_varieties": [
+    "SaaS B2B classico (CRUD, dashboard, report, gestione — AI opzionale)",
+    "tool AI per nicchia specifica (non AI generico, ma applicato a un settore)",
+    "bot utility (Telegram/Discord — logica tradizionale o AI leggera)",
+    "community / marketplace verticale (domanda/offerta, matching umano, recensioni)",
+    "automazione tradizionale (webhook, schedule, notifiche, integrazioni API)",
+    "strumento per creator/developer/artigiani (template, generatori, calcolatori)",
+    "estensione browser (utility, produttivit\u00e0, integrazione)",
+    "piattaforma contenuti / educational (corsi, template, risorse)",
+    "mini-gioco web o mobile-web (single player o multiplayer leggero)",
+    "directory / catalogo verificato (elenchi, ricerca, filtri, profili)",
+    "e-commerce di nicchia (vetrina, carrello, pagamenti, dropshipping leggero)",
+    "automazione AI applicata (non AI generalista, ma risolve un problema preciso)"
+  ],
+
+  "mutation_types": [
+    "cambia il target di riferimento (stessa soluzione, utenti/settore diverso)",
+    "cambia il modello di business/pricing (es. subscription -> usage / marketplace -> commissioni)",
+    "applica la stessa idea a un dominio/settore completamente diverso"
+  ],
+
+  "common_keywords": [
+    "ai", "tool", "app", "api", "saas", "bot", "user", "data",
+    "platform", "service", "online", "web", "cloud", "auto",
+    "strumento", "utente", "dati", "piattaforma", "servizio",
+    "sistema", "gestione", "management", "solution", "soluzione",
+    "assistant", "assistente", "intelligenza", "machine", "learning",
+    "tempo", "persona", "personale", "locale", "digitale", "sociale",
+    "rapido", "semplice", "facile", "veloce", "nuovo", "nuova",
+    "casa", "lavoro", "vita", "giorno", "mese", "anno",
+    "creare", "trovare", "avere", "fare", "essere", "potere",
+    "primo", "prima", "ogni", "altro", "altra", "stessa", "stesso",
+    "privacy", "sicurezza", "gratuito", "premium", "account",
+    "notifica", "aggiornamento", "download", "upload", "login",
+    "accesso", "ricerca", "filtro", "categoria", "profilo",
+    "messaggio", "chat", "email", "telefono", "mobile", "desktop"
+  ],
+
+  "generation_examples": [
+    "Piattaforma verticale per una nicchia SPECIFICA con monetizzazione chiara e competitor assenti",
+    "Tool che risolve un problema frustrante per un target ben definito (non \"tutti\")",
+    "Marketplace iper-locale che collega domanda/offerta in un settore con pochi intermediari",
+    "Bot/servizio che automatizza un processo manuale doloroso per professionisti di nicchia",
+    "Directory verificata con recensioni autentiche in un settore dove non esistono",
+    "SaaS B2B per un settore artigianale specifico (non \"ristoranti\" ma \"pasticcerie artigianali\")",
+    "Piattaforma educational che risolve un PROBLEMA SPECIFICO per un target preciso",
+    "Tool AI che applica ML a un DATASET DI NICCHIA (non AI generalista)",
+    "Mini-gioco sociale con meccanica virale e monetizzazione non invasiva",
+    "Community verticale con curation umana in un settore frammentato"
+  ],
+
+  "prompts": {
+    "generate_system": "Sei un generatore di idee startup originali, concrete e molto varie. EVITA di ripeterti: se un'idea \u00e8 gi\u00e0 stata generata, cambia completamente approccio, target e meccanica.",
+    "generate_output": "OUTPUT (conciso, max 200 parole):\nNome: ...\nProblema: ...\nSoluzione: ...\nTarget: ...\nMonetizzazione: ...",
+
+    "market_system": "Sei un analista di mercato con 20 anni di esperienza. USA TUTTA LA SCALA 0-100. Sii selettivo: 1 idea su 10 merita oltre 70. La maggior parte delle idee (anche buone) sta tra 30 e 55. Solo idee con nicchia chirurgica, monetizzazione immediata e mercato reale non saturo meritano 70+.",
+    "market_criteria": "1. TARGET: nicchia specifica e reale (alto) vs target generico (basso)\n2. MONETIZZAZIONE: modello concreto e rapido (alto) vs vago (basso)\n3. MERCATO: spazio reale non saturo (alto) vs mercato affollato (basso)\n4. COMPETITOR: vantaggio chiaro (alto) vs commodity (basso)",
+    "market_anchors": "10=inesistente, 25=debole, 50=discreto, 75=buono, 95=eccellente",
+    "market_output": "Rispondi SOLO con JSON:\n{{\"score\": <0-100>, \"weakness\": \"<max 15 parole>\", \"concepts\": [\"<kw1>\",\"<kw2>\",\"<kw3>\"]}}",
+
+    "technical_system": "Sei un CTO con esperienza in startup. USA TUTTA LA SCALA 0-100. Sii selettivo: 1 idea su 10 merita oltre 70. La maggior parte delle idee sta tra 30 e 55. Solo idee veramente originali, semplici da costruire e senza rischi esterni meritano 70+.",
+    "technical_criteria": "1. ORIGINALIT\u00c0: genuinamente nuova (alto) vs ennesima variante (basso)\n2. FATTIBILIT\u00c0: realizzabile da 1 dev in 2 settimane (alto) vs complesso (basso)\n3. COMPLESSIT\u00c0: stack semplice (alto) vs infrastruttura complessa (basso)\n4. RISCHIO: autonomo (alto) vs dipende da API/dati esterni (basso)",
+    "technical_anchors": "10=banale e complessa, 25=gi\u00e0 vista, 50=onesta, 75=originale e realizzabile, 95=brillante e semplicissima",
+    "technical_output": "Rispondi SOLO con JSON:\n{{\"score\": <0-100>, \"weakness\": \"<max 15 parole>\", \"concepts\": [\"<kw1>\",\"<kw2>\",\"<kw3>\"]}}",
+
+    "competition_system": "Sei un analista che cerca SPAZI VUOTI. Sii selettivo: 1 idea su 10 ha un competition_score > 65. La maggior parte ha concorrenza significativa (score 30-55). USA TUTTA LA SCALA 0-100. Identifica competitor reali.",
+    "competition_questions": "1. Competitori diretti: esistono soluzioni IDENTICHE o solo simili?\n2. Domanda: reale o hype? Ci sono community/gruppi che ne parlano?\n3. Barriere: quanto \u00e8 difficile per altri copiare l'idea?\n4. Spazio: questa nicchia \u00e8 servita o ignorata dai competitor?",
+    "competition_anchors": "90=nicchia vergine, 70=poca concorrenza, 50=mediamente saturo, 30=molto saturo",
+    "competition_output": "Rispondi SOLO con JSON:\n{{\n  \"analysis\": \"<analisi concisa>\",\n  \"competition_score\": <intero 0-100>\n}}",
+
+    "enrichment_system": "Sei un senior product manager. Analizza l'idea e fornisci dettagli concreti per passare all'implementazione.",
+    "enrichment_format": "**Stack tecnologico suggerito** (linguaggi, framework, servizi specifici)\n**3 funzionalit\u00e0 MVP** (essenziali per il lancio)\n**Canale acquisizione** (come trovare i primi 100 utenti)\n**SWAT veloce** (Strengths, Weaknesses, Opportunities, Threats \u2014 1 punto ciascuno)\n\nOutput max 200 parole, concreto e specifico.",
+
+    "mutation_system": "Sei un product architect creativo. Trasforma l'idea seguendo il tipo di mutazione indicato.",
+    "mutation_output": "Crea una variante seguendo STRETTAMENTE questo tipo di mutazione. L'idea risultante deve essere diversa dall'originale nel modo indicato. Output conciso (max 150 parole): Nome, Problema, Soluzione, Target."
+  }
+}

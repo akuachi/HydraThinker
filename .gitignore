@@ -10,3 +10,5 @@ output/evolution/
 output/accepted/
 output/dashboard_data.json
 output/embeddings_cache.json
+memory.json
+instances/
