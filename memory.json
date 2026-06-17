@@ -1,0 +1,44 @@
+{
+  "concepts": [
+    "gioco di caccia al tesoro",
+    "ristoranti locali",
+    "monetizzazione per ristoranti",
+    "community-driven platform",
+    "skill sharing",
+    "niche artisan economy",
+    "community platform",
+    "collaboration tools",
+    "esperienze autentiche",
+    "browser extension",
+    "monetizzazione premium",
+    "suggerimenti locali"
+  ],
+  "types_history": [
+    "game",
+    "community",
+    "browser-ext"
+  ],
+  "domains_history": [
+    "cibo, cucina e ristorazione locale",
+    "artigianato, maker e DIY",
+    "viaggi, turismo locale e esperienze"
+  ],
+  "hall_of_fame": [
+    {
+      "gen": 1,
+      "score": 86.4,
+      "type": "game",
+      "idea": "Nome: **ChefQuest: Ristoranti Segreti**  \nProblema: I turisti e gli appassionati di cibo non sanno dove trovare ristoranti locali autentici e non mainstream, spesso persi tra le strade.  \nSoluzione: Un gioco di caccia al tesoro in cui gli utenti ricevono indizi per scoprire ristoranti locali nascosti. Ogni volta che si visita un ristorante, si ottiene un \"tessera\" che permette di sbloccare livelli"
+    }
+  ],
+  "recent_ideas": [
+    "Nome: **ChefQuest: Ristoranti Segreti**  \nProblema: I turisti e gli appassionati di cibo non sanno dove trovare ristoranti locali autentici e non mainstream, spesso persi tra le strade.  \nSoluzione: Un gioco di caccia al tesoro in cui gli utenti ricevono indizi per scoprire ristoranti locali nascosti. Ogni volta che si visita un ristorante, si ottiene un \"tessera\" che permette di sbloccare livelli successivi e premi. I ristoranti possono registrarsi per ottenere visibilità e premi per le recensioni.  \nTarget: Turisti e foodie curiosi, ristoranti locali che desiderano visibilità.  \nMonetizzazione: Abbonamento premium per ristoranti (per funzionalità avanzate come statistiche e promozioni), microtransazioni per acquistare \"indizi extra\" o premi virtuali.",
+    "Nome: **CraftHive**  \nProblema: Gli artigiani locali hanno difficoltà a trovare collaborazioni creative e a condividere progetti in modo trasparente, senza intermediari.  \nSoluzione: Piattaforma online basata su community dove gli artigiani, designer e maker possono condividere progetti in fase di sviluppo, cercare collaboratori e ricevere feedback in tempo reale. Include funzionalità come \"Open Workshop\" (progetti aperti al contributo) e \"Skill Swap\" (scambio di competenze).  \nTarget: Artigiani, maker e creativi locali che operano in nicchie come ceramica, sartoria, elettronica fai-da-te e design sostenibile.  \nMonetizzazione: Sottoscrizioni premium per funzionalità avanzate (es. visibilità, analisi dati), commissioni su transazioni di collaborazione e marketplace integrato per materiali e strumenti specifici.",
+    "Nome: **LocalPassport**  \nProblema: I turisti e visitatori non sanno dove andare per scoprire esperienze autentiche e culturali in una città sconosciuta.  \nSoluzione: Estensione browser che suggerisce in tempo reale attività locali (es. laboratori artigianali, tour in bicicletta, cene con chef) basandosi sulla posizione e sugli interessi dell'utente. Integra recensioni verificate da residenti e suggerimenti di \"cittadini locali\".  \nTarget: Turisti e visitatori in cerca di esperienze genuine in città di piccole e medie dimensioni.  \nMonetizzazione: Abbonamento premium per accesso a esperienze esclusive, suggerimenti personalizzati e rimozione di pubblicità."
+  ],
+  "varieties_history": [
+    "community / marketplace verticale (domanda/offerta, matching umano, recensioni)",
+    "e-commerce di nicchia (vetrina, carrello, pagamenti, dropshipping leggero)",
+    "SaaS B2B classico (CRUD, dashboard, report, gestione — AI opzionale)"
+  ]
+}

@@ -1,0 +1,13 @@
+# HydraThinker — Python Dependencies
+# Requires Python >= 3.10
+#
+# Install:
+#   pip install -r requirements.txt
+#
+# Run:
+#   python thinker_ultra.py
+#
+# Dashboard (si avvia automaticamente):
+#   http://localhost:8080/dashboard.html
+
+ollama

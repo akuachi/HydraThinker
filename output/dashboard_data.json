@@ -1,0 +1,85 @@
+{
+  "generations": [
+    {
+      "gen": 1,
+      "timestamp": "2026-06-17T01:22:13.786454",
+      "best_score": 86.4,
+      "avg_score": 82.5,
+      "total_candidates": 6,
+      "ideas": [
+        {
+          "type": "game",
+          "score": 86.4,
+          "idea": "Nome: **ChefQuest: Ristoranti Segreti**  \nProblema: I turisti e gli appassionati di cibo non sanno dove trovare ristoranti locali autentici e non mainstream, spesso persi tra le strade.  \nSoluzione: Un gioco di caccia al tesoro in cui gli utenti ricevono indizi per scoprire ristoranti locali nascosti. Ogni volta che si visita un ristorante, si ottiene un \"tessera\" che permette di sbloccare livelli successivi e premi. I ristoranti possono registrarsi per ottenere visibilità e premi per le recensioni.  \nTarget: Turisti e foodie curiosi, ristoranti locali che desiderano visibilità.  \nMonetizzazio",
+          "weak": "Mercato: Dipendenza da partecipazione attiva dei ristoranti | Tecnico: Dipendenza da recensioni e partecipazione dei ristoranti",
+          "variety": "community / marketplace verticale (domanda/offerta, matching umano, recensioni)",
+          "vc_score": 85.6,
+          "comp_score": 62,
+          "enrichment": "**Stack tecnologico suggerito**: React Native (mobile), Node.js + Express (backend), Firebase (autenticazione, storage e analisi), Mapbox (mappatura e indizi geolocalizzati).  \n**3 funzionalità MVP**: 1) Gioco di caccia al tesoro con indizi geolocalizzati; 2) Sistema di tessere e livelli per gli utenti; 3) Profilo ristorante con opzioni per registrarsi e gestire recensioni.  \n**Canale acquisizione**: Collaborazione con influencer foodie e gruppi Reddit/Instagram, campagna di lancio su Discord co"
+        },
+        {
+          "type": "community",
+          "score": 83.3,
+          "idea": "Nome: **CraftHive**  \nProblema: Gli artigiani locali hanno difficoltà a trovare collaborazioni creative e a condividere progetti in modo trasparente, senza intermediari.  \nSoluzione: Piattaforma online basata su community dove gli artigiani, designer e maker possono condividere progetti in fase di sviluppo, cercare collaboratori e ricevere feedback in tempo reale. Include funzionalità come \"Open Workshop\" (progetti aperti al contributo) e \"Skill Swap\" (scambio di competenze).  \nTarget: Artigiani, maker e creativi locali che operano in nicchie come ceramica, sartoria, elettronica fai-da-te e de",
+          "weak": "Mercato: Scarsa visibilità iniziale e potenziale resistenza al cambiamento da parte degli artigiani | Tecnico: Dipendenza da community per crescita iniziale",
+          "variety": "e-commerce di nicchia (vetrina, carrello, pagamenti, dropshipping leggero)",
+          "vc_score": 82.7,
+          "comp_score": 60,
+          "enrichment": ""
+        },
+        {
+          "type": "browser-ext",
+          "score": 83.3,
+          "idea": "Nome: **LocalPassport**  \nProblema: I turisti e visitatori non sanno dove andare per scoprire esperienze autentiche e culturali in una città sconosciuta.  \nSoluzione: Estensione browser che suggerisce in tempo reale attività locali (es. laboratori artigianali, tour in bicicletta, cene con chef) basandosi sulla posizione e sugli interessi dell'utente. Integra recensioni verificate da residenti e suggerimenti di \"cittadini locali\".  \nTarget: Turisti e visitatori in cerca di esperienze genuine in città di piccole e medie dimensioni.  \nMonetizzazione: Abbonamento premium per accesso a esperienze e",
+          "weak": "Mercato: Concetto simile a esistenti, competizione crescente nel turismo esperienziale | Tecnico: Dipendenza da recensioni verificate e dati locali",
+          "variety": "SaaS B2B classico (CRUD, dashboard, report, gestione — AI opzionale)",
+          "vc_score": 82.7,
+          "comp_score": 60,
+          "enrichment": ""
+        },
+        {
+          "type": "saas",
+          "score": 82.2,
+          "idea": "Nome: **LocalWander**  \nProblema: I turisti che visitano una città non riescono a scoprire esperienze locali autentiche e non convenzionali, come laboratori artigianali, tour gastronomici off-the-grid o eventi culturali di nicchia.  \nSoluzione: Piattaforma SaaS che cataloga e promuove esperienze turistiche locali verificate da residenti, con filtri per tipologia, orari, accessibilità e recensioni reali. Utenti possono creare itinerari personalizzati e condividere le loro scoperte.  \nTarget: Turisti curiosi, blogger di viaggi, influencer locali e operatori turistici piccoli.  \nMonetizzazione: A",
+          "weak": "Mercato: Saturazione parziale del mercato, concorrenza da piattaforme esistenti | Tecnico: Concorrenza esistente, complessità di verifica esperienze",
+          "variety": "directory / catalogo verificato (elenchi, ricerca, filtri, profili)",
+          "vc_score": 79.9,
+          "comp_score": 62,
+          "enrichment": ""
+        },
+        {
+          "type": "data-product",
+          "score": 81.0,
+          "idea": "**Nome:** MindMeld  \n**Problema:** Le persone non riescono a mantenere un equilibrio tra pensieri razionali e emotivi, portando a decisioni impulsive o stress cronico.  \n**Soluzione:** Un mini-gioco web basato su neuroscienze, dove gli utenti devono \"equilibrare\" un cervello virtuale muovendo due manubri: uno per il lato razionale e uno per il lato emotivo. Ogni scelta influisce su un indicatore di benessere mentale in tempo reale, con suggerimenti di mindfulness e respirazione guidata.  \n**Target:** Giovani adulti (25-35 anni) che soffrono di stress da lavoro o relazioni complesse.  \n**Moneti",
+          "weak": "Mercato: Difficile differenziarsi da app di mindfulness esistenti | Tecnico: Dipendenza da feedback utente per migliorare il gioco",
+          "variety": "mini-gioco web o mobile-web (single player o multiplayer leggero)",
+          "vc_score": 82.7,
+          "comp_score": 55,
+          "enrichment": ""
+        },
+        {
+          "type": "marketplace",
+          "score": 78.6,
+          "idea": "Nome: **SavingsSwap**  \nProblema: Le persone non riescono a risparmiare perché si comprano cose che non usano, ma non sanno dove rivenderle.  \nSoluzione: Piattaforma di scambio tra utenti per oggetti di valore non utilizzati (elettronica, abbonamenti, beni di consumo), con una valutazione AI basata su dati di mercato per suggerire scambi equi.  \nTarget: Giovani adulti (25-35 anni) che vivono in città e hanno un alto tasso di acquisti impulsivi online.  \nMonetizzazione: Commissione del 5% su ogni transazione completata, con opzione premium per utenti che vogliono aumentare visibilità dei propri",
+          "weak": "Mercato: Difficoltà nel valutare oggetti non standardizzati | Tecnico: Dipendenza da dati di mercato esterni e concorrenza nel settore",
+          "variety": "automazione AI applicata (non AI generalista, ma risolve un problema preciso)",
+          "vc_score": 73.3,
+          "comp_score": 65,
+          "enrichment": ""
+        }
+      ]
+    }
+  ],
+  "hall_of_fame": [
+    {
+      "gen": 1,
+      "score": 86.4,
+      "type": "game",
+      "idea": "Nome: **ChefQuest: Ristoranti Segreti**  \nProblema: I turisti e gli appassionati di cibo non sanno dove trovare ristoranti locali autentici e non mainstream, spesso persi tra le strade.  \nSoluzione: Un gioco di caccia al tesoro in cui gli utenti ricevono indizi per scoprire ristoranti locali nascosti. Ogni volta che si visita un ristorante, si ottiene un \"tessera\" che permette di sbloccare livelli"
+    }
+  ],
+  "last_updated": "2026-06-17T01:22:13.786461",
+  "current_gen": 1,
+  "min_score": 35,
+  "hof_score": 85
+}

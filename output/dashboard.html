@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HydraThinker Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0a0c10;--bg2:#0f1117;--surface:rgba(255,255,255,.04);--surface2:rgba(255,255,255,.07);--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);--accent:#7c3aed;--accent2:#a855f7;--accent-glow:rgba(124,58,237,.35);--green:#10b981;--amber:#f59e0b;--red:#ef4444;--blue:#3b82f6;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--radius:12px;--radius2:8px;--font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace}
+    html{scroll-behavior:smooth}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;overflow-x:hidden}
+    .bg-blobs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+    .blob{position:absolute;border-radius:50%;filter:blur(120px);opacity:.18;animation:drift 18s ease-in-out infinite}
+    .blob-1{width:600px;height:600px;background:#7c3aed;top:-200px;left:-150px}
+    .blob-2{width:500px;height:500px;background:#1d4ed8;bottom:-150px;right:-100px;animation-delay:-9s}
+    .blob-3{width:350px;height:350px;background:#10b981;top:40%;left:50%;animation-delay:-4s}
+    @keyframes drift{0%,100%{transform:translate(0,0)scale(1)}33%{transform:translate(40px,-30px)scale(1.05)}66%{transform:translate(-20px,40px)scale(.95)}}
+    .wrapper{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:0 24px 60px}
+    header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;padding:28px 0 16px;border-bottom:1px solid var(--border);margin-bottom:0}
+    .logo{display:flex;align-items:center;gap:14px}
+    .logo-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 24px var(--accent-glow)}
+    .logo-text h1{font-size:1.4rem;font-weight:700;letter-spacing:-.5px}
+    .logo-text p{font-size:.8rem;color:var(--text3);margin-top:1px}
+    .header-meta{display:flex;align-items:center;gap:20px}
+    .pulse-dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse-glow 2s ease-in-out infinite}
+    @keyframes pulse-glow{0%,100%{box-shadow:0 0 8px var(--green);opacity:1}50%{box-shadow:0 0 18px var(--green);opacity:.7}}
+    .last-update{font-size:.78rem;color:var(--text3);font-family:var(--mono)}
+    .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:24px;padding-top:16px;overflow-x:auto}
+    .tab-btn{background:none;border:none;color:var(--text3);font-family:var(--font);font-size:.82rem;font-weight:500;padding:8px 16px;cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;white-space:nowrap}
+    .tab-btn:hover{color:var(--text2)}
+    .tab-btn.active{color:var(--accent2);border-bottom-color:var(--accent2)}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;transition:border-color .25s,transform .2s;position:relative;overflow:hidden}
+    .kpi:hover{border-color:var(--border2);transform:translateY(-2px)}
+    .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .25s}
+    .kpi:hover::before{opacity:1}
+    .kpi-label{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+    .kpi-value{font-size:1.7rem;font-weight:700;letter-spacing:-.5px;background:linear-gradient(135deg,var(--text),var(--text2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .kpi-sub{font-size:.7rem;color:var(--text3);margin-top:2px}
+    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px}
+    .chart-wrap{position:relative;height:220px}
+    .section-title{font-size:.95rem;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:8px;margin-bottom:12px}
+    .table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px;overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:.82rem}
+    thead th{text-align:left;padding:8px 10px;color:var(--text3);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+    tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:var(--surface2)}
+    tbody td{padding:10px;vertical-align:top}
+    .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+    .badge-saas{background:rgba(124,58,237,.2);color:#c084fc}
+    .badge-bot{background:rgba(59,130,246,.2);color:#93c5fd}
+    .badge-tool{background:rgba(16,185,129,.2);color:#6ee7b7}
+    .badge-marketplace{background:rgba(245,158,11,.2);color:#fcd34d}
+    .badge-api{background:rgba(236,72,153,.2);color:#f9a8d4}
+    .badge-unknown{background:rgba(100,116,139,.2);color:#94a3b8}
+    .score-bar{display:flex;align-items:center;gap:6px;white-space:nowrap}
+    .score-track{width:50px;height:4px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;flex-shrink:0}
+    .score-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--accent2))}
+    .score-num{font-family:var(--mono);font-size:.8rem;font-weight:600}
+    .score-num.high{color:var(--green)}
+    .score-num.medium{color:var(--amber)}
+    .score-num.low{color:var(--red)}
+    .idea-text{color:var(--text2);line-height:1.5;max-width:420px;font-size:.8rem}
+    .weakness{color:var(--text3);font-size:.75rem;font-style:italic;max-width:220px}
+    .empty{text-align:center;padding:40px 20px;color:var(--text3)}
+    .empty .empty-icon{font-size:2rem;margin-bottom:8px;opacity:.5}
+    .empty p{font-size:.82rem}
+    footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--border);text-align:center;color:var(--text3);font-size:.72rem}
+    footer span{color:var(--accent2);font-weight:600}
+    .refresh-bar{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:999}
+    .refresh-progress{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));animation:refill 15s linear infinite}
+    @keyframes refill{0%{width:100%}100%{width:0%}}
+    .fade-in{animation:fadeIn .4s ease forwards;opacity:0}
+    @keyframes fadeIn{to{opacity:1;transform:translateY(0)}from{opacity:0;transform:translateY(8px)}}
+    .gen-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:12px;transition:border-color .2s}
+    .gen-card:hover{border-color:var(--border2)}
+    .gen-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer}
+    .gen-header-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .gen-num{font-family:var(--mono);font-size:.85rem;color:var(--accent2);font-weight:600}
+    .gen-meta{display:flex;gap:12px;font-size:.75rem;color:var(--text3);flex-wrap:wrap}
+    .gen-toggle{color:var(--text3);font-size:.75rem;transition:transform .2s}
+    .gen-card.expanded .gen-toggle{transform:rotate(180deg)}
+    .gen-body{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+    .gen-card.expanded .gen-body{display:block}
+    .md-render{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px 20px;font-size:.82rem;line-height:1.65;color:var(--text2);overflow-x:auto}
+    .md-render h1{font-size:1.1rem;color:var(--text);margin-bottom:10px;font-weight:600}
+    .md-render h2{font-size:.95rem;color:var(--text);margin:12px 0 6px;font-weight:600}
+    .md-render strong{color:var(--text)}
+    .md-render p{margin-bottom:6px}
+    .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+    .filters input,.filters select{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:6px 12px;color:var(--text);font-family:var(--font);font-size:.8rem;outline:none;transition:border-color .2s}
+    .filters input:focus,.filters select:focus{border-color:var(--accent)}
+    .filters input{flex:1;min-width:160px}
+    .filters select{cursor:pointer}
+    .filters label{color:var(--text3);font-size:.78rem;display:flex;align-items:center;gap:4px}
+    .stats-bar{display:flex;gap:16px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;font-size:.78rem;color:var(--text3)}
+    .stats-bar strong{color:var(--text2)}
+    .btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius2);color:var(--text2);padding:6px 14px;cursor:pointer;font-family:var(--font);font-size:.78rem;transition:all .15s}
+    .btn:hover{background:rgba(124,58,237,.15);border-color:var(--accent);color:var(--accent2)}
+    .variety-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:20px}
+    .variety-cell{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:10px 14px;font-size:.75rem;transition:all .2s}
+    .variety-cell:hover{border-color:var(--border2)}
+    .variety-cell .v-name{color:var(--text2);font-weight:500;font-size:.78rem}
+    .variety-cell .v-count{font-family:var(--mono);font-size:.7rem;color:var(--text3);margin-top:2px}
+    .variety-cell.v-used{border-left:3px solid var(--accent)}
+    .variety-cell.v-unused{border-left:3px solid var(--border);opacity:.5}
+    .detail-modal{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px}
+    .detail-modal.open{display:flex}
+    .detail-content{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);max-width:800px;width:100%;max-height:80vh;overflow-y:auto;padding:28px;position:relative}
+    .detail-close{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text3);font-size:1.4rem;cursor:pointer}
+    .detail-close:hover{color:var(--text)}
+    .detail-content h2{color:var(--accent2);margin-bottom:8px}
+    .detail-content .meta{font-size:.78rem;color:var(--text3);margin-bottom:16px}
+    .detail-content .section{margin-bottom:16px}
+    .detail-content .section h3{color:var(--text);font-size:.9rem;margin-bottom:6px;font-weight:600}
+    .detail-content .section p{color:var(--text2);font-size:.82rem;line-height:1.6}
+  </style>
+</head>
+<body>
+<div class="bg-blobs" aria-hidden="true"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+<div class="wrapper">
+  <header>
+    <div class="logo"><div class="logo-icon">🧬</div><div class="logo-text"><h1>HydraThinker</h1><p>Evolutionary Idea Engine</p></div></div>
+    <div class="header-meta"><div class="pulse-dot"></div><span class="last-update" id="lastUpdate">Caricamento...</span></div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="live">Live Dashboard</button>
+    <button class="tab-btn" data-tab="history">Storico</button>
+    <button class="tab-btn" data-tab="variety">Mappa Variet&agrave;</button>
+    <button class="tab-btn" data-tab="all-ideas">Tutte le Idee <span class="badge-count" id="allIdeasCount">0</span></button>
+  </nav>
+
+  <!-- TAB: LIVE -->
+  <section class="tab-content active" id="tab-live">
+    <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="chart-card fade-in"><div class="section-title">Andamento Score</div><div class="chart-wrap"><canvas id="scoreChart"></canvas></div></div>
+    <div class="chart-card fade-in"><div class="section-title">Distribuzione Score (ultima gen)</div><div class="chart-wrap"><canvas id="distChart"></canvas></div></div>
+    <div class="table-card fade-in">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span class="section-title" style="margin-bottom:0">Idee — Generazione Corrente</span>
+        <button class="btn" onclick="exportCSV()">Esporta CSV</button>
+      </div>
+      <div id="ideasContainer"><div class="empty"><div class="empty-icon">⏳</div><p>In attesa...</p></div></div>
+    </div>
+    <div class="table-card fade-in" id="enrichmentCard" style="display:none">
+      <div class="section-title">Enrichment &amp; SWOT — Miglior Idea</div>
+      <div class="md-render" id="enrichmentContent"></div>
+    </div>
+  </section>
+
+  <!-- TAB: HISTORY -->
+  <section class="tab-content" id="tab-history">
+    <div class="section-title">Storico Generazioni</div>
+    <div id="historyContainer"><div class="empty"><div class="empty-icon">📜</div><p>Nessuna generazione.</p></div></div>
+  </section>
+
+  <!-- TAB: VARIETY MAP -->
+  <section class="tab-content" id="tab-variety">
+    <div class="section-title">Mappa delle Variet&agrave; Esplorate</div>
+    <div class="stats-bar" id="varietyStats"></div>
+    <div class="variety-grid" id="varietyGrid"></div>
+    <div class="section-title" style="margin-top:24px">Domini Esplorati</div>
+    <div class="stats-bar" id="domainStats"></div>
+  </section>
+
+  <!-- TAB: ALL IDEAS -->
+  <section class="tab-content" id="tab-all-ideas">
+    <div class="stats-bar" id="allStatsBar"></div>
+    <div class="filters">
+      <input type="text" id="searchInput" placeholder="Cerca nel testo..." />
+      <select id="typeFilter"><option value="">Tutti i tipi</option></select>
+      <select id="genFilter"><option value="">Tutte le gen</option></select>
+      <label>Score &ge; <input type="number" id="minScoreFilter" value="0" style="width:48px" /></label>
+      <button class="btn" onclick="document.getElementById('searchInput').value='';document.getElementById('typeFilter').value='';document.getElementById('genFilter').value='';document.getElementById('minScoreFilter').value=0;refreshAll()">Reset</button>
+      <button class="btn" onclick="exportCSVAll()">Esporta CSV</button>
+    </div>
+    <div class="table-card" style="padding:0;border:none;background:none"><div id="allIdeasContainer"></div></div>
+  </section>
+
+  <footer><p>HydraThinker &middot; Powered by <span>Ollama + Evolutionary LLM</span> &middot; Auto-refresh 15s</p></footer>
+</div>
+
+<div class="refresh-bar"><div class="refresh-progress" id="refreshProgress"></div></div>
+
+<!-- DETAIL MODAL -->
+<div class="detail-modal" id="detailModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="detail-content">
+    <button class="detail-close" onclick="document.getElementById('detailModal').classList.remove('open')">&times;</button>
+    <h2 id="detailTitle"></h2>
+    <div class="meta" id="detailMeta"></div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<script>
+const DATA_URL='./dashboard_data.json',REFRESH_MS=15000;
+const CTX=document.getElementById('scoreChart').getContext('2d');
+const scoreChart=new Chart(CTX,{
+  type:'line',
+  data:{labels:[],datasets:[
+    {label:'Best Score',data:[],borderColor:'#a855f7',backgroundColor:'rgba(168,85,247,.12)',borderWidth:2.5,pointBackgroundColor:'#a855f7',pointRadius:3,pointHoverRadius:6,tension:.4,fill:true},
+    {label:'Avg Score',data:[],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.06)',borderWidth:2,pointBackgroundColor:'#3b82f6',pointRadius:2,pointHoverRadius:5,tension:.4,fill:true,borderDash:[4,3]},
+    {label:'Pass Rate',data:[],borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.06)',borderWidth:1.5,pointBackgroundColor:'#10b981',pointRadius:2,pointHoverRadius:4,tension:.4,borderDash:[2,3],yAxisID:'y1'}
+  ]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:'#94a3b8',font:{family:'Inter',size:11},boxWidth:10,padding:16}}},
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10,family:'JetBrains Mono'}}},
+      y:{min:0,max:100,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10,family:'JetBrains Mono'},stepSize:20}},
+      y1:{min:0,max:1,position:'right',grid:{drawOnChartArea:false},ticks:{color:'var(--green)',font:{size:10,family:'JetBrains Mono'},callback:v=>(v*100).toFixed(0)+'%'}}
+    }
+  }
+});
+
+const distCtx=document.getElementById('distChart').getContext('2d');
+const distChart=new Chart(distCtx,{
+  type:'bar',
+  data:{labels:[],datasets:[{label:'Idee',data:[],backgroundColor:'rgba(124,58,237,.5)',borderColor:'#7c3aed',borderWidth:1,borderRadius:4}]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{grid:{display:false},ticks:{color:'#64748b',font:{size:10}}},
+      y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10},stepSize:1}}
+    }
+  }
+});
+
+function badgeClass(t){const m={saas:'saas',bot:'bot',tool:'tool',marketplace:'marketplace',api:'api'};return'badge badge-'+(m[t]||'unknown')}
+function scoreClass(s){return s>=80?'high':s>=60?'medium':'low'}
+function truncate(s,n){return s&&s.length>n?s.slice(0,n)+'...':(s||'')}
+function fmtTime(iso){if(!iso)return'—';const d=new Date(iso);return d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+
+document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active');
+}));
+
+function showDetail(idea,gen,type,score,weak,reality,enrichment){
+  const m=document.getElementById('detailModal');
+  document.getElementById('detailTitle').textContent='Gen '+gen+' · '+type+' · Score: '+score;
+  document.getElementById('detailMeta').innerHTML='<strong>Debolezza:</strong> '+truncate(weak,300)+'<br><strong>Mercato:</strong> '+truncate(reality||'—',400);
+  let body='<div class="section"><h3>Idea</h3><p>'+marked.parse(idea||'')+'</p></div>';
+  if(enrichment)body+='<div class="section"><h3>Enrichment &amp; SWOT</h3>'+marked.parse(enrichment)+'</div>';
+  document.getElementById('detailBody').innerHTML=body;
+  m.classList.add('open');
+}
+
+function kpi(id,label,value,sub){
+  return '<div class="kpi fade-in"><div class="kpi-label">'+label+'</div><div class="kpi-value" id="'+id+'">'+(value??'—')+'</div><div class="kpi-sub">'+sub+'</div></div>';
+}
+
+function renderLive(data){
+  const gens=data.generations||[],last=gens[gens.length-1]||{};
+  const totalIdeas=gens.reduce((s,g)=>s+(g.ideas||[]).length,0);
+  const allScores=gens.flatMap(g=>(g.ideas||[]).map(i=>i.score));
+  const avgAll=allScores.length?(allScores.reduce((a,b)=>a+b,0)/allScores.length).toFixed(1):'—';
+  const bestAll=allScores.length?Math.max(...allScores).toFixed(1):'—';
+
+  document.getElementById('kpiGrid').innerHTML=
+    kpi('kpiGen','Generazione',data.current_gen,'cicli evolutivi')+
+    kpi('kpiBest','Best Score',last.best_score??'—','questa gen')+
+    kpi('kpiAvg','Avg Score',last.avg_score??'—','questa gen')+
+    kpi('kpiOverall','Best Ever',bestAll,'globale')+
+    kpi('kpiAvgAll','Media Globale',avgAll,'su '+totalIdeas+' idee')+
+    kpi('kpiTotal','Totale Idee',totalIdeas,'generate');
+
+  document.getElementById('lastUpdate').textContent='Aggiornato alle '+fmtTime(data.last_updated);
+
+  const slice=gens.slice(-40);
+  scoreChart.data.labels=slice.map(g=>'G'+g.gen);
+  scoreChart.data.datasets[0].data=slice.map(g=>g.best_score);
+  scoreChart.data.datasets[1].data=slice.map(g=>g.avg_score??null);
+  scoreChart.data.datasets[2].data=slice.map(g=>g.total_candidates?((g.ideas||[]).length/g.total_candidates):null);
+  scoreChart.update('none');
+
+  const curIdeas=last.ideas||[];
+  const bins=Array(10).fill(0);
+  curIdeas.forEach(i=>{const b=Math.min(9,Math.floor((i.score||0)/10));bins[b]++});
+  distChart.data.labels=['0-10','10-20','20-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100'];
+  distChart.data.datasets[0].data=bins;
+  distChart.update('none');
+
+  const container=document.getElementById('ideasContainer');
+  if(!curIdeas.length){container.innerHTML='<div class="empty"><div class="empty-icon">💤</div><p>Nessuna idea in questa gen.</p></div>';return}
+  container.innerHTML='<table><thead><tr><th>Tipo</th><th>Score</th><th>Idea</th><th>Voto M/T</th><th>Debolezza</th><th></th></tr></thead><tbody>'+
+    curIdeas.map(item=>{
+      const fill=Math.min(100,item.score);
+      const vc=item.vc_score??'—';const comp=item.comp_score??'—';
+      return '<tr>'+
+        '<td><span class="'+badgeClass(item.type)+'">'+item.type+'</span></td>'+
+        '<td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:'+fill+'%"></div></div><span class="score-num '+scoreClass(item.score)+'">'+item.score+'</span></div></td>'+
+        '<td><div class="idea-text">'+truncate(item.idea,240)+'</div></td>'+
+        '<td style="font-family:var(--mono);font-size:.75rem;color:var(--text3)">'+vc+' / '+comp+'</td>'+
+        '<td><div class="weakness">'+truncate(item.weak||'—',120)+'</div></td>'+
+        '<td><button class="btn" onclick="showDetail('+
+          "'"+esc(item.idea)+"',"+last.gen+",'"+item.type+"',"+item.score+",'"+esc(item.weak)+"','"+esc(item.reality)+"','"+esc(item.enrichment||'')+"'"+
+        ')">Dettaglio</button></td>'+
+        '</tr>';
+    }).join('')+'</tbody></table>';
+
+  const enrichCard=document.getElementById('enrichmentCard');
+  const enrichContent=document.getElementById('enrichmentContent');
+  const bestIdea=curIdeas[0];
+  if(bestIdea&&bestIdea.enrichment){
+    enrichCard.style.display='block';
+    enrichContent.innerHTML=marked.parse(bestIdea.enrichment);
+  }else enrichCard.style.display='none';
+}
+
+function esc(s){return(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,'\\n')}
+
+function renderHistory(gens){
+  const container=document.getElementById('historyContainer');
+  if(!gens||!gens.length){container.innerHTML='<div class="empty"><div class="empty-icon">📜</div><p>Nessuna generazione.</p></div>';return}
+  container.innerHTML=[...gens].reverse().map(g=>{
+    const best=g.ideas?.[0]||{};
+    const mdContent='# Gen '+g.gen+' — Best: '+g.best_score+'\n\n'+
+      '**Tipo:** '+best.type+' | **Pass rate:** '+((g.ideas||[]).length+'/'+g.total_candidates)+
+      (best.enrichment?'\n\n## Enrichment\n\n'+best.enrichment:'');
+    return '<div class="gen-card fade-in">'+
+      '<div class="gen-header" onclick="this.parentElement.classList.toggle(\'expanded\')">'+
+        '<div class="gen-header-left">'+
+          '<span class="gen-num">Gen '+g.gen+'</span>'+
+          '<div class="gen-meta">'+
+            '<span>Best: <strong style="color:var(--accent2)">'+g.best_score+'</strong></span>'+
+            '<span>Media: '+g.avg_score+'</span>'+
+            '<span>Idee: '+(g.ideas||[]).length+'/'+g.total_candidates+'</span>'+
+            '<span style="color:var(--text3)">'+fmtTime(g.timestamp)+'</span>'+
+          '</div>'+
+        '</div><span class="gen-toggle">▼</span>'+
+      '</div>'+
+      '<div class="gen-body"><div class="md-render">'+marked.parse(mdContent)+'</div></div>'+
+    '</div>';
+  }).join('');
+}
+
+function renderVariety(gens,data){
+  const allIdeas=gens.flatMap(g=>(g.ideas||[]).map(i=>({...i,gen:g.gen})));
+  const varieties=['SaaS B2B classico','tool AI per nicchia','bot utility','community / marketplace',
+    'automazione tradizionale','strumento per creator','estensione browser','piattaforma contenuti',
+    'mini-gioco web','directory / catalogo','e-commerce di nicchia','automazione AI applicata'];
+  const counts={};allIdeas.forEach(i=>{const v=i.variety||'altro';counts[v]=(counts[v]||0)+1});
+  const domCounts={};
+  const domains=['salute e benessere personale','educazione e apprendimento pratico','finanza personale e risparmio',
+    'produttività artigiani e freelance','creatività: musica, arte, scrittura','ambiente e sostenibilità quotidiana',
+    'sport, fitness e nutrizione','viaggi, turismo locale e esperienze','cibo, cucina e ristorazione locale',
+    'gaming e comunità di giocatori','burocrazia e documenti semplificati','HR, recruiting e carriera',
+    'real estate e affitti','e-commerce verticale di nicchia','genitori, famiglie e bambini','animali domestici',
+    'artigianato, maker e DIY','musica e podcast indipendenti','volontariato e terzo settore','developer tools'];
+  allIdeas.forEach(i=>{const d=i.domain||'altro';domCounts[d]=(domCounts[d]||0)+1});
+
+  document.getElementById('varietyStats').innerHTML=
+    'Totale idee: <strong>'+allIdeas.length+'</strong> | '+
+    'Varietà esplorate: <strong>'+Object.keys(counts).length+'/'+varieties.length+'</strong> | '+
+    'Domini esplorati: <strong>'+Object.keys(domCounts).length+'/'+domains.length+'</strong>';
+
+  document.getElementById('varietyGrid').innerHTML=varieties.map(v=>{
+    const c=counts[v]||0;
+    return '<div class="variety-cell '+(c?'v-used':'v-unused')+'">'+
+      '<div class="v-name">'+v+'</div>'+
+      '<div class="v-count">'+(c?c+' idee':'non ancora esplorata')+'</div></div>';
+  }).join('');
+
+  const explored=domains.filter(d=>domCounts[d]).length;
+  document.getElementById('domainStats').innerHTML=
+    'Domini esplorati: <strong>'+explored+'/'+domains.length+'</strong> ('+(explored/domains.length*100).toFixed(0)+'%)';
+}
+
+function renderAllIdeas(gens,search,typeF,genF,minScore){
+  const container=document.getElementById('allIdeasContainer');
+  let all=[];
+  (gens||[]).forEach(g=>(g.ideas||[]).forEach(i=>all.push({...i,gen:g.gen,timestamp:g.timestamp})));
+  let filtered=all.filter(i=>{
+    if(search&&!(i.idea||'').toLowerCase().includes(search.toLowerCase()))return false;
+    if(typeF&&i.type!==typeF)return false;
+    if(genF&&i.gen!==parseInt(genF))return false;
+    if(i.score<minScore)return false;return true;
+  }).sort((a,b)=>b.score-a.score);
+
+  const avg=all.length?(all.reduce((s,i)=>s+i.score,0)/all.length).toFixed(1):'—';
+  const bestAll=all.length?Math.max(...all.map(i=>i.score)).toFixed(1):'—';
+  const types=new Set(all.map(i=>i.type));
+  document.getElementById('allStatsBar').innerHTML=
+    'Totale: <strong>'+all.length+'</strong> | '+
+    'Media: <strong>'+avg+'</strong> | '+
+    'Best: <strong>'+bestAll+'</strong> | '+
+    'Tipi: <strong>'+types.size+'</strong> | '+
+    'Visibili: <strong>'+filtered.length+'</strong>';
+  document.getElementById('allIdeasCount').textContent=all.length;
+
+  const typeSel=document.getElementById('typeFilter');
+  if(typeSel.options.length<=1){
+    const ts=[...types].sort();ts.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;typeSel.appendChild(o)})
+  }
+  const genSel=document.getElementById('genFilter');
+  if(genSel.options.length<=1){
+    const gs=[...new Set(all.map(i=>i.gen))].sort((a,b)=>b-a);
+    gs.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent='Gen '+g;genSel.appendChild(o)})
+  }
+
+  if(!filtered.length){container.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>Nessuna idea corrisponde.</p></div>';return}
+  container.innerHTML='<table><thead><tr><th>Gen</th><th>Tipo</th><th>Score</th><th>Idea</th><th>Debolezza</th><th></th></tr></thead><tbody>'+
+    filtered.map(i=>{
+      const fill=Math.min(100,i.score);
+      return '<tr>'+
+        '<td style="font-family:var(--mono);font-size:.75rem;color:var(--text3)">G'+i.gen+'</td>'+
+        '<td><span class="'+badgeClass(i.type)+'">'+i.type+'</span></td>'+
+        '<td><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:'+fill+'%"></div></div><span class="score-num '+scoreClass(i.score)+'">'+i.score+'</span></div></td>'+
+        '<td><div class="idea-text">'+truncate(i.idea,250)+'</div></td>'+
+        '<td><div class="weakness">'+truncate(i.weak||'—',100)+'</div></td>'+
+        '<td><button class="btn" onclick="showDetail('+
+          "'"+esc(i.idea)+"',"+i.gen+",'"+i.type+"',"+i.score+",'"+esc(i.weak)+"','"+esc(i.reality)+"','"+esc(i.enrichment||'')+"'"+
+        ')">Dettaglio</button></td>'+
+        '</tr>';
+    }).join('')+'</tbody></table>';
+}
+
+function exportCSV(){
+  const gens=window._lastData?.generations||[];
+  const last=gens[gens.length-1];
+  if(!last||!last.ideas)return;
+  let csv='Gen,Tipo,Score,VC,Competition,Idea,Weakness\n';
+  (last.ideas||[]).forEach(i=>{
+    csv+=last.gen+','+i.type+','+i.score+','+(i.vc_score||'')+','+(i.comp_score||'')+',"'+truncate((i.idea||'').replace(/"/g,'""'),400)+'","'+truncate((i.weak||'').replace(/"/g,'""'),200)+'"\n';
+  });
+  downloadCSV(csv,'hydra_gen_'+last.gen+'.csv');
+}
+function exportCSVAll(){
+  const gens=window._lastData?.generations||[];
+  let all=[];
+  gens.forEach(g=>(g.ideas||[]).forEach(i=>all.push({...i,gen:g.gen})));
+  let csv='Gen,Tipo,Score,VC,Competition,Idea,Weakness\n';
+  all.forEach(i=>{
+    csv+=i.gen+','+i.type+','+i.score+','+(i.vc_score||'')+','+(i.comp_score||'')+',"'+truncate((i.idea||'').replace(/"/g,'""'),400)+'","'+truncate((i.weak||'').replace(/"/g,'""'),200)+'"\n';
+  });
+  downloadCSV(csv,'hydra_all_ideas.csv');
+}
+function downloadCSV(csv,name){
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);
+}
+
+function refreshAll(){
+  const search=document.getElementById('searchInput').value;
+  const typeF=document.getElementById('typeFilter').value;
+  const genF=document.getElementById('genFilter').value;
+  const minScore=parseFloat(document.getElementById('minScoreFilter').value)||0;
+  const gens=window._lastData?.generations||[];
+  renderAllIdeas(gens,search,typeF,genF,minScore);
+}
+
+document.getElementById('searchInput').addEventListener('input',refreshAll);
+document.getElementById('typeFilter').addEventListener('change',refreshAll);
+document.getElementById('genFilter').addEventListener('change',refreshAll);
+document.getElementById('minScoreFilter').addEventListener('change',refreshAll);
+
+async function loadData(){
+  try{
+    const res=await fetch(DATA_URL+'?t='+Date.now());
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    window._lastData=data;
+    const gens=data.generations||[];
+    renderLive(data);
+    renderHistory(gens);
+    renderVariety(gens,data);
+    const search=document.getElementById('searchInput').value;
+    const typeF=document.getElementById('typeFilter').value;
+    const genF=document.getElementById('genFilter').value;
+    const minScore=parseFloat(document.getElementById('minScoreFilter').value)||0;
+    renderAllIdeas(gens,search,typeF,genF,minScore);
+  }catch(e){
+    document.getElementById('lastUpdate').textContent='Errore: '+e.message;
+  }
+}
+loadData();setInterval(loadData,REFRESH_MS);
+const progressEl=document.getElementById('refreshProgress');
+function restartBar(){progressEl.style.animation='none';void progressEl.offsetWidth;progressEl.style.animation=''}
+restartBar();setInterval(restartBar,REFRESH_MS);
+</script></body></html>
